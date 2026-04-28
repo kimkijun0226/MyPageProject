@@ -27,7 +27,10 @@ export function TopicEditorForm({ id, mode, topic, userId }: TopicEditorFormProp
   const [content, setContent] = useState<Block[]>(topic?.content ? JSON.parse(topic.content) : []);
   const [category, setCategory] = useState<string>(topic?.category ?? "");
   const [thumbnail, setThumbnail] = useState<File | string | null>(topic?.thumbnail ?? null);
-  const [visibility, setVisibility] = useState<TOPIC_VISIBILITY>(topic?.visibility ?? "PRIVATE");
+  // create 모드에서는 공개범위를 선택하지 않아도 되도록 기본값을 자동 적용
+  const [visibility, setVisibility] = useState<TOPIC_VISIBILITY>(
+    isUpdateMode ? (topic?.visibility ?? "PRIVATE") : "PUBLIC",
+  );
 
   const handleSave = async () => {
     if (!title && !content.length && !category && !thumbnail) {
@@ -149,35 +152,37 @@ export function TopicEditorForm({ id, mode, topic, userId }: TopicEditorFormProp
           <span className="font-semibold text-base">카테고리 및 썸네일 등록</span>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-1">
-            <Asterisk size={14} className="text-[#F96859]" />
-            <Label className="text-muted-foreground">공개 범위</Label>
+        {isUpdateMode && (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-1">
+              <Asterisk size={14} className="text-[#F96859]" />
+              <Label className="text-muted-foreground">공개 범위</Label>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={visibility === "PRIVATE" ? "default" : "outline"}
+                size="sm"
+                className="flex-1 gap-1"
+                onClick={() => setVisibility("PRIVATE")}
+              >
+                <Lock className="size-4" />
+                나만 보기
+              </Button>
+              <Button
+                type="button"
+                variant={visibility === "PUBLIC" ? "default" : "outline"}
+                size="sm"
+                className="flex-1 gap-1"
+                onClick={() => setVisibility("PUBLIC")}
+              >
+                <Globe className="size-4" />
+                전체 공개
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">전체 공개로 발행하면 로그인 없이도 글을 볼 수 있어요.</p>
           </div>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant={visibility === "PRIVATE" ? "default" : "outline"}
-              size="sm"
-              className="flex-1 gap-1"
-              onClick={() => setVisibility("PRIVATE")}
-            >
-              <Lock className="size-4" />
-              나만 보기
-            </Button>
-            <Button
-              type="button"
-              variant={visibility === "PUBLIC" ? "default" : "outline"}
-              size="sm"
-              className="flex-1 gap-1"
-              onClick={() => setVisibility("PUBLIC")}
-            >
-              <Globe className="size-4" />
-              전체 공개
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">전체 공개 시 커뮤니티에서 다른 사람도 볼 수 있어요.</p>
-        </div>
+        )}
 
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-1">
