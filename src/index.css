@@ -157,19 +157,30 @@
   background-color: transparent !important;
 }
 
-/* 커뮤니티 뷰 - 파란색 테마 */
-:root.community {
-  --primary: #4472e3;
-  --ring: #4472e3;
-  --accent: oklch(0.94 0.025 240);
-}
-
 /* BlockNote 라이트 모드 텍스트 색상 강제 적용 */
 :root:not(.dark) .bn-editor,
 :root:not(.dark) .bn-block-content,
 :root:not(.dark) .bn-inline-content {
   --bn-colors-editor-text: oklch(0.145 0 0) !important;
   color: oklch(0.145 0 0) !important;
+}
+
+@keyframes scrollWheel {
+  0% {
+    transform: translateY(0);
+    opacity: 0.15;
+  }
+  40% {
+    opacity: 0.7;
+  }
+  70% {
+    transform: translateY(12px);
+    opacity: 0.25;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 0.15;
+  }
 }
 
 /* BlockNote 다크 모드 텍스트 색상 강제 적용 */

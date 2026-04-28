@@ -81,15 +81,9 @@ export function NewTopicCard({ props }: Props) {
     });
   };
 
-  const isPublic = props.visibility === "PUBLIC";
-
   return (
     <Card
-      className={`w-full h-fit p-4 gap-4 cursor-pointer hover:scale-102 transition-all duration-200 ease-out bg-card ${
-        isPublic
-          ? "border border-[#4472e3]/40 shadow-[0_2px_10px_rgba(68,114,227,0.30)] hover:shadow-[0_3px_14px_rgba(68,114,227,0.48)]"
-          : "border border-[#7c79c7]/30 shadow-[0_2px_10px_rgba(124,121,199,0.24)] hover:shadow-[0_3px_14px_rgba(124,121,199,0.40)]"
-      }`}
+      className="w-full h-fit p-4 gap-4 cursor-pointer hover:scale-102 transition-all duration-200 ease-out bg-card border border-[#7c79c7]/35 shadow-[0_2px_12px_rgba(124,121,199,0.28)] hover:shadow-[0_4px_18px_rgba(124,121,199,0.45)]"
       onClick={() => navigate(`/topics/${props.id}/detail`)}
     >
       <div className="flex items-start gap-4">

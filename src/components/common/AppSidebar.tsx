@@ -10,9 +10,7 @@ interface AppSidebarProps {
 
 function AppSidebar({ variant }: AppSidebarProps) {
   const [searchParams] = useSearchParams();
-  const view = searchParams.get("view");
   const currentCategory = searchParams.get("category") ?? "";
-  const isCommunityView = view === "community";
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -36,11 +34,10 @@ function AppSidebar({ variant }: AppSidebarProps) {
       el.removeEventListener("scroll", checkScroll);
       window.removeEventListener("resize", checkScroll);
     };
-  }, [variant]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [variant]);
 
   const makeSearch = (category: string) => {
     const params = new URLSearchParams();
-    if (isCommunityView) params.set("view", "community");
     if (category) params.set("category", category);
     const query = params.toString();
     return query ? `?${query}` : "";
@@ -106,7 +103,7 @@ function AppSidebar({ variant }: AppSidebarProps) {
   // 데스크탑 - 세로 리스트
   return (
     <div className="w-full flex flex-col gap-0.5">
-      <p className="px-3 mb-2 text-xs font-semibold text-muted-foreground/60 tracking-wider uppercase">카테고리</p>
+      <p className="px-3 mb-2 text-sm font-semibold text-muted-foreground/60 tracking-wider uppercase">카테고리</p>
       {CLASS_CATEGORY.map((menu) => {
         const isActive = currentCategory === menu.category;
         const to = { pathname: "/", search: makeSearch(menu.category) };
@@ -116,7 +113,7 @@ function AppSidebar({ variant }: AppSidebarProps) {
             key={menu.id}
             to={to}
             className={cn(
-              "flex items-center px-3 py-1.5 rounded-lg text-[13px] transition-colors duration-150",
+              "flex items-center px-3 py-2 rounded-lg text-[15px] transition-colors duration-150",
               isActive
                 ? "bg-primary/15 text-primary font-semibold"
                 : "text-foreground/65 hover:bg-foreground/6 hover:text-foreground",
