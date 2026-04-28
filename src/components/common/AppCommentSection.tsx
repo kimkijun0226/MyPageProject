@@ -62,10 +62,6 @@ export function AppCommentSection({ topicId, topicAuthorId, topicTitle }: AppCom
   const handleSubmit = () => {
     const trimmed = newComment.trim();
     if (!trimmed) return;
-    if (!user) {
-      toast.error("로그인이 필요합니다.");
-      return;
-    }
     createComment.mutate(
       { content: trimmed },
       {
@@ -78,10 +74,6 @@ export function AppCommentSection({ topicId, topicAuthorId, topicTitle }: AppCom
   const handleReplySubmit = (parentId: number) => {
     const trimmed = replyContent.trim();
     if (!trimmed) return;
-    if (!user) {
-      toast.error("로그인이 필요합니다.");
-      return;
-    }
     createComment.mutate(
       { content: trimmed, parent_id: parentId },
       {
@@ -260,7 +252,7 @@ interface CommentItemProps {
 function CommentItem({ comment, currentUserId, onLike, onDelete, onReply, isReply }: CommentItemProps) {
   const isOwner = comment.author_id === currentUserId;
   const avatarUrl = comment.author?.profile_image;
-  const nickname = comment.author?.nickname ?? "알 수 없음";
+  const nickname = comment.author?.nickname ?? "익명";
 
   return (
     <div className="flex gap-3 py-3">

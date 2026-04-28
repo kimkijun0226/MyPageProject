@@ -19,7 +19,7 @@ export function useCreateComment(topicId: number, topicAuthorId?: string, topicT
 
   return useMutation({
     mutationFn: (payload: { content: string; parent_id?: number | null }) =>
-      commentApi.createComment({ topic_id: topicId, author_id: user!.id, ...payload }),
+      commentApi.createComment({ topic_id: topicId, author_id: user?.id ?? null, ...payload }),
     onSuccess: async (_, variables) => {
       queryClient.invalidateQueries({ queryKey: commentKeys.list(topicId).queryKey });
 

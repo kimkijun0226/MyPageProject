@@ -3,7 +3,7 @@ import supabase from "@/lib/supabase";
 export interface Comment {
   id: number;
   topic_id: number;
-  author_id: string;
+  author_id: string | null;
   parent_id: number | null;
   content: string;
   created_at: string;
@@ -28,8 +28,13 @@ const getComments = async (topicId: number, currentUserId?: string): Promise<Com
   if (comments.length === 0) return [];
 
   // 작성자 정보 일괄 조회
-  const authorIds = [...new Set(comments.map((c) => c.author_id as string))];
-  const { data: users } = await supabase.from("user").select("id, nickname, profile_image").in("id", authorIds);
+  const authorIds = [...new Set(comments.map((c) => (c.author_id as string | null) ?? null))].filter(
+    (v): v is string => Boolean(v),
+  );
+  const { data: users } =
+    authorIds.length > 0
+      ? await supabase.from("user").select("id, nickname, profile_image").in("id", authorIds)
+      : { data: [] as { id: string; nickname: string; profile_image: string | null }[] };
 
   const userMap: Record<string, { id: string; nickname: string; profile_image: string | null }> = {};
   for (const u of users ?? []) userMap[u.id] = u;
@@ -50,7 +55,7 @@ const getComments = async (topicId: number, currentUserId?: string): Promise<Com
 
   return comments.map((c) => ({
     ...(c as Comment),
-    author: userMap[c.author_id] ?? null,
+    author: c.author_id ? userMap[c.author_id] ?? null : null,
     like_count: likeMap[c.id]?.count ?? 0,
     is_liked: likeMap[c.id]?.isLiked ?? false,
   }));
@@ -58,9 +63,9 @@ const getComments = async (topicId: number, currentUserId?: string): Promise<Com
 
 const createComment = async (payload: {
   topic_id: number;
-  author_id: string;
   content: string;
   parent_id?: number | null;
+  author_id?: string | null;
 }): Promise<Comment> => {
   const { data, error } = await supabase.from("comment").insert(payload).select().single();
   if (error) throw error;
