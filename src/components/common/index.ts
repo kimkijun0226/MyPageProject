@@ -8,3 +8,4 @@ export { AppDraftsDialog } from "./AppDraftsDialog";
 export { AppProfileUpload } from "./AppProfileUpload";
 export { AuthorProfileCard } from "./AuthorProfileCard";
 export { AppCommentSection } from "./AppCommentSection";
+export { IconTooltip } from "./IconTooltip";
