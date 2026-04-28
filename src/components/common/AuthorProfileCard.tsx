@@ -15,6 +15,7 @@ function AuthorProfileCard({ authorInfo }: AuthorProfileCardProps) {
   const [isImageError, setIsImageError] = useState(false);
   const hasProfileImage = !!authorInfo?.profile_image && !isImageError;
   const { user } = useAuthStore();
+  const isAuthed = Boolean(user?.id);
   const { isFollowing, followerCount, toggleFollow, isLoading } = useFollow(authorInfo?.id ?? "");
   const navigate = useNavigate();
   const getOrCreate = useGetOrCreateRoom();
@@ -65,24 +66,30 @@ function AuthorProfileCard({ authorInfo }: AuthorProfileCardProps) {
                 isFollowing
                   ? "bg-red-500/15 text-red-500 dark:text-red-400 hover:bg-red-500/25"
                   : "bg-foreground/6 text-foreground hover:bg-foreground/10",
+                !isAuthed && "opacity-60 cursor-not-allowed hover:bg-foreground/6",
               )}
               onClick={toggleFollow}
-              disabled={isLoading || user?.id === authorInfo?.id}
+              disabled={!isAuthed || isLoading || user?.id === authorInfo?.id}
+              title={!isAuthed ? "로그인이 필요합니다." : undefined}
             >
               {isFollowing ? <UserMinus className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
-              {isFollowing ? "언팔로우" : "팔로우"}
+              {!isAuthed ? "로그인 필요" : isFollowing ? "언팔로우" : "팔로우"}
             </Button>
 
             <Button
               type="button"
               variant="secondary"
               size="sm"
-              className="w-full rounded-xl bg-foreground/6 text-xs font-medium text-foreground hover:bg-foreground/10"
+              className={cn(
+                "w-full rounded-xl bg-foreground/6 text-xs font-medium text-foreground hover:bg-foreground/10",
+                !isAuthed && "opacity-60 cursor-not-allowed hover:bg-foreground/6",
+              )}
               onClick={handleDm}
-              disabled={getOrCreate.isPending || user?.id === authorInfo?.id}
+              disabled={!isAuthed || getOrCreate.isPending || user?.id === authorInfo?.id}
+              title={!isAuthed ? "로그인이 필요합니다." : undefined}
             >
               <MessageCircle className="h-3.5 w-3.5" />
-              DM
+              {!isAuthed ? "로그인 필요" : "DM"}
             </Button>
           </div>
         </CardContent>
