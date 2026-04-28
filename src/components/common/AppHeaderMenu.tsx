@@ -25,8 +25,6 @@ interface AppHeaderMenuProps {
     id: string;
   } | null;
   userInfo: UserInfo | null | undefined;
-  isCommunityView?: boolean;
-  onToggleCommunityView?: () => void;
   onSearchOpen?: () => void;
   dmUnreadCount?: number;
 }
