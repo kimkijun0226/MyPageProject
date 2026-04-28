@@ -32,14 +32,56 @@ yarn dev
 
 ## 환경 변수
 
-루트에 `.env`를 두고 다음을 설정합니다.
+루트에 `.env`를 두고 다음을 설정합니다. (`.env.example`을 복사해서 시작하세요)
 
 ```env
+VITE_APP_URL=http://localhost:5173
 VITE_SUPABASE_URL=https://xxxxxxxx.supabase.co
 VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY=eyJ...
 ```
 
 Supabase 대시보드 → **Project Settings → API**에서 확인합니다.
+(`VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY`는 클라이언트에서 쓰는 공개 키입니다. Secret/Service Role 키는 프론트에 넣지 마세요.)
+
+---
+
+## 공개 글/익명 댓글 (Supabase RLS)
+
+현재 앱은 **로그인 없이 글(PUBLIC) 조회**가 가능하고, **로그인 없이 댓글 작성(익명)**도 가능하도록 구성할 수 있습니다. 이를 위해 Supabase에서 아래를 적용하세요.
+
+> 주의: 운영 환경에서는 스팸 방지(레이트 리밋, 캡챠, 금칙어/링크 필터 등)를 꼭 추가하는 것을 권장합니다.
+
+```sql
+-- topic: 공개 글은 누구나 읽기
+alter table topic enable row level security;
+
+drop policy if exists "public read topics" on topic;
+create policy "public read topics"
+on topic for select
+using (
+  status = 'publish'
+  and coalesce(visibility, 'PUBLIC') = 'PUBLIC'
+);
+
+-- comment: 익명 작성 허용을 위해 author_id nullable 권장
+alter table comment enable row level security;
+alter table comment alter column author_id drop not null;
+
+-- 댓글 읽기: 누구나
+drop policy if exists "public read comments" on comment;
+create policy "public read comments"
+on comment for select
+using (true);
+
+-- 댓글 작성: 누구나 (익명 허용)
+drop policy if exists "public insert comments" on comment;
+create policy "public insert comments"
+on comment for insert
+with check (
+  content is not null
+  and length(trim(content)) > 0
+);
+```
 
 ---
 
