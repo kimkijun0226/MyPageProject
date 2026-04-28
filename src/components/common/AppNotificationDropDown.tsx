@@ -16,8 +16,8 @@ const typeLabel: Record<NotificationType, string> = {
   new_post: "새 글",
   comment: "댓글",
   reply: "답글",
-  topic_like: "좀아요",
-  comment_like: "댓글 좀아요",
+  topic_like: "좋아요",
+  comment_like: "댓글 좋아요",
 };
 
 export function AppNotificationDropdown() {
@@ -50,6 +50,16 @@ export function AppNotificationDropdown() {
     markAsRead.mutate(id);
     setIsOpen(false);
     navigate(link);
+  };
+
+  const parseContent = (content: string) => {
+    const lines = content
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
+    if (lines.length === 0) return { title: content, preview: "" };
+    if (lines.length === 1) return { title: lines[0], preview: "" };
+    return { title: lines[0], preview: lines.slice(1).join(" ") };
   };
 
   return (
@@ -90,11 +100,15 @@ export function AppNotificationDropdown() {
                   key={notification.id}
                   type="button"
                   className={cn(
-                    "flex w-full items-start gap-3 px-4 py-3 text-left transition hover:bg-foreground/5",
-                    !notification.is_read && "bg-foreground/3",
+                    "relative flex w-full items-start gap-3 px-4 py-3 text-left transition hover:bg-foreground/5",
+                    !notification.is_read && "bg-primary/5",
                   )}
                   onClick={() => handleNotificationClick(notification.id, notification.link)}
                 >
+                  {/* 안읽음 점 */}
+                  {!notification.is_read && (
+                    <span className="absolute left-2.5 top-4 h-1.5 w-1.5 rounded-full bg-primary" />
+                  )}
                   {/* 타입별 아이콘 */}
                   {!notification.thumbnail && <NotificationIcon type={notification.type} />}
                   {notification.thumbnail && (
@@ -105,11 +119,30 @@ export function AppNotificationDropdown() {
                     />
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-semibold text-primary mb-0.5">{typeLabel[notification.type]}</p>
-                    <p className="text-sm text-foreground/90 line-clamp-3 whitespace-pre-line leading-snug">
-                      {notification.content}
-                    </p>
-                    <p className="mt-0.5 text-xs text-foreground/40">{dayjs(notification.created_at).fromNow()}</p>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="inline-flex items-center rounded-full border border-primary/15 bg-primary/8 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                        {typeLabel[notification.type]}
+                      </span>
+                      <span className="shrink-0 text-[11px] text-foreground/40">
+                        {dayjs(notification.created_at).fromNow()}
+                      </span>
+                    </div>
+
+                    {(() => {
+                      const { title, preview } = parseContent(notification.content);
+                      return (
+                        <div className="mt-1.5 min-w-0">
+                          <p className="text-sm font-semibold text-foreground/90 line-clamp-2 leading-snug">
+                            {title}
+                          </p>
+                          {preview ? (
+                            <p className="mt-0.5 text-xs text-foreground/55 line-clamp-2 leading-snug">
+                              {preview}
+                            </p>
+                          ) : null}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </button>
               ))
@@ -124,11 +157,11 @@ export function AppNotificationDropdown() {
 function NotificationIcon({ type }: { type: NotificationType }) {
   const map: Record<NotificationType, { icon: React.ReactNode; className: string }> = {
     follow: { icon: <UserPlus className="h-4 w-4" />, className: "bg-emerald-500/20 text-emerald-400" },
-    new_post: { icon: <FileText className="h-4 w-4" />, className: "bg-foreground/10 text-foreground/50" },
-    comment: { icon: <MessageCircle className="h-4 w-4" />, className: "bg-blue-500/20 text-blue-400" },
-    reply: { icon: <MessageCircle className="h-4 w-4" />, className: "bg-indigo-500/20 text-indigo-400" },
-    topic_like: { icon: <Heart className="h-4 w-4" />, className: "bg-rose-500/20 text-rose-400" },
-    comment_like: { icon: <Heart className="h-4 w-4" />, className: "bg-pink-500/20 text-pink-400" },
+    new_post: { icon: <FileText className="h-4 w-4" />, className: "bg-violet-500/18 text-violet-400" },
+    comment: { icon: <MessageCircle className="h-4 w-4" />, className: "bg-sky-500/18 text-sky-400" },
+    reply: { icon: <MessageCircle className="h-4 w-4" />, className: "bg-indigo-500/18 text-indigo-400" },
+    topic_like: { icon: <Heart className="h-4 w-4" />, className: "bg-rose-500/18 text-rose-400" },
+    comment_like: { icon: <Heart className="h-4 w-4" />, className: "bg-pink-500/18 text-pink-400" },
   };
   const { icon, className } = map[type] ?? map.new_post;
   return (
