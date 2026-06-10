@@ -1,3 +1,4 @@
+import { resolveAuthStoreUser } from "@/lib/authUser";
 import supabase from "@/lib/supabase";
 import { useAuthStore } from "@/stores";
 import { useEffect } from "react";
@@ -14,25 +15,15 @@ export default function useAuthListener() {
     const checkSession = async () => {
       const session = await supabaseGetSession.mutateAsync();
       if (session) {
-        setUser({
-          id: session.id,
-          email: session.email || "",
-          role: session.role || "",
-        });
+        setUser(session);
       }
     };
     checkSession();
 
-    // 실시간으로 세션 변경 감지
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         const userId = session.user.id;
-        setUser({
-          id: userId,
-          email: session.user.email || "",
-          role: session.user.role || "",
-        });
-        // navigate 전에 유저 정보를 캐시에 미리 채워 이미지 깜빡임 방지
+        void resolveAuthStoreUser(userId, session.user.email || "").then(setUser);
         queryClient.prefetchQuery({
           queryKey: queryKeys.user.info(userId).queryKey,
           queryFn: () => userApi.getUserInfo(userId),
@@ -40,6 +31,7 @@ export default function useAuthListener() {
       } else {
         setUser(null);
         queryClient.removeQueries({ queryKey: queryKeys.user._def });
+        queryClient.removeQueries({ queryKey: ["follow"] });
       }
     });
 

@@ -56,11 +56,7 @@ export function useAuth() {
     meta: { scope: "auth" as const },
     onSuccess: async (user) => {
       if (user) {
-        setUser({
-          id: user.id,
-          email: user.email as string,
-          role: user.role as string,
-        });
+        setUser(user);
         await queryClient.prefetchQuery({
           queryKey: queryKeys.user.info(user.id).queryKey,
           queryFn: () => userApi.getUserInfo(user.id),

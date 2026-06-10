@@ -1,3 +1,4 @@
+import { resolveAuthStoreUser } from "@/lib/authUser";
 import supabase from "@/lib/supabase";
 
 export type SignInPayload = {
@@ -18,7 +19,7 @@ export type SignUpPayload = {
 export type AuthUser = {
   id: string;
   email: string;
-  role: string;
+  isAdmin: boolean;
 };
 
 export type SignUpResult = {
@@ -28,6 +29,7 @@ export type SignUpResult = {
     email: string;
     nickname: string;
     profile_image: string | null;
+    is_admin: boolean;
     service_agreed: boolean;
     privacy_agreed: boolean;
     marketing_agreed: boolean;
@@ -44,11 +46,7 @@ async function signInWithPassword(payload: SignInPayload): Promise<AuthUser> {
   if (error) throw error;
   const { user } = data;
   if (!user) throw new Error("로그인에 실패했습니다.");
-  return {
-    id: user.id,
-    email: (user.email ?? "") as string,
-    role: (user.role ?? "") as string,
-  };
+  return resolveAuthStoreUser(user.id, (user.email ?? "") as string);
 }
 
 async function signUp(payload: SignUpPayload): Promise<SignUpResult> {
@@ -67,7 +65,7 @@ async function signUp(payload: SignUpPayload): Promise<SignUpResult> {
         {
           id: user.id,
           email: user.email ?? "",
-          // payload.nickname이 있을 때만 넣고 없으면 트리거가 넣은 값 유지
+          is_admin: false,
           ...(payload.nickname ? { nickname: payload.nickname } : {}),
           ...(payload.profile_image ? { profile_image: payload.profile_image } : {}),
           service_agreed: payload.service_agreed,
@@ -86,13 +84,14 @@ async function signUp(payload: SignUpPayload): Promise<SignUpResult> {
     authUser: {
       id: user.id,
       email: (user.email ?? "") as string,
-      role: (user.role ?? "") as string,
+      isAdmin: false,
     },
     profile: {
       id: profile.id,
       email: profile.email,
       nickname: profile.nickname ?? "",
       profile_image: profile.profile_image ?? null,
+      is_admin: profile.is_admin ?? false,
       service_agreed: profile.service_agreed,
       privacy_agreed: profile.privacy_agreed,
       marketing_agreed: profile.marketing_agreed,
@@ -125,11 +124,7 @@ async function supabaseGetSession(): Promise<AuthUser | null> {
   const session = data.session;
   if (!session?.user) return null;
 
-  return {
-    id: session.user.id,
-    email: session.user.email ?? "",
-    role: (session.user as { role?: string }).role ?? "",
-  };
+  return resolveAuthStoreUser(session.user.id, session.user.email ?? "");
 }
 
 export const authApi = {
