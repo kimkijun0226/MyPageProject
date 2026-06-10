@@ -52,8 +52,10 @@ export const useFollow = (targetUserId: string) => {
     }
   };
 
+  const authed = Boolean(user?.id && user.id !== targetUserId);
+
   return {
-    isFollowing: isFollowing.data ?? false,
+    isFollowing: authed ? (isFollowing.data ?? false) : false,
     followerCount: followerCount.data ?? 0,
     toggleFollow,
     isLoading: followMutation.isPending || unfollowMutation.isPending,

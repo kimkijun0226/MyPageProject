@@ -1,17 +1,22 @@
 import type { UserInfo } from "@/api";
-import { Button, Card, CardContent, Separator } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { useFollow, useGetOrCreateRoom } from "@/hooks";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores";
-import { BadgeCheck, MessageCircle, UserMinus, UserPlus } from "lucide-react";
+import { MessageCircle, UserMinus, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+
+const LOGIN_REQUIRED_MESSAGE = "로그인시 이용가능한 서비스";
 
 type AuthorProfileCardProps = {
   authorInfo: UserInfo | null | undefined;
+  variant?: "default" | "compact";
 };
 
-function AuthorProfileCard({ authorInfo }: AuthorProfileCardProps) {
+function AuthorProfileCard({ authorInfo, variant = "default" }: AuthorProfileCardProps) {
+  const isCompact = variant === "compact";
   const [isImageError, setIsImageError] = useState(false);
   const hasProfileImage = !!authorInfo?.profile_image && !isImageError;
   const { user } = useAuthStore();
@@ -20,81 +25,100 @@ function AuthorProfileCard({ authorInfo }: AuthorProfileCardProps) {
   const navigate = useNavigate();
   const getOrCreate = useGetOrCreateRoom();
 
+  const handleFollow = () => {
+    if (!isAuthed) {
+      toast.info(LOGIN_REQUIRED_MESSAGE);
+      return;
+    }
+    toggleFollow();
+  };
+
   const handleDm = () => {
+    if (!isAuthed) {
+      toast.info(LOGIN_REQUIRED_MESSAGE);
+      return;
+    }
     if (!authorInfo?.id) return;
     getOrCreate.mutate(authorInfo.id, {
       onSuccess: (roomId) => navigate(`/dm?room=${roomId}`),
     });
   };
 
+  const isSelf = user?.id === authorInfo?.id;
+
   return (
-    <aside className="w-full lg:sticky lg:top-[80px] lg:w-52 lg:shrink-0">
-      <Card className="rounded-2xl border-border bg-card py-0">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="min-w-0 space-y-1">
-              <div className="flex items-center gap-1.5">
-                <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
-                <h3 className="truncate text-sm font-semibold text-foreground">{authorInfo?.nickname || "작성자"}</h3>
-              </div>
-              <p className="text-xs text-muted-foreground">팔로우 {followerCount} 명</p>
+    <section
+      className={cn(
+        "border border-border/50 bg-background/75 backdrop-blur-md",
+        isCompact ? "max-w-[220px] rounded-lg px-2.5 py-2 shadow-sm" : "rounded-xl bg-muted/15 px-4 py-4 sm:px-5",
+      )}
+    >
+      {!isCompact && (
+        <p className="mb-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">작성자</p>
+      )}
+      <div className={cn("flex items-center gap-2", !isCompact && "flex-col gap-4 sm:flex-row sm:items-center sm:justify-between")}>
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          {hasProfileImage ? (
+            <img
+              src={authorInfo.profile_image ?? undefined}
+              alt="author profile"
+              className={cn(
+                "shrink-0 rounded-full object-cover ring-1 ring-border/60",
+                isCompact ? "h-8 w-8" : "h-12 w-12",
+              )}
+              onError={() => setIsImageError(true)}
+            />
+          ) : (
+            <div
+              className={cn(
+                "flex shrink-0 items-center justify-center rounded-full bg-muted font-medium text-muted-foreground ring-1 ring-border/60",
+                isCompact ? "h-8 w-8 text-[11px]" : "h-12 w-12 text-sm",
+              )}
+            >
+              {authorInfo?.nickname?.charAt(0) || "작"}
             </div>
-
-            {hasProfileImage ? (
-              <img
-                src={authorInfo.profile_image ?? undefined}
-                alt="author profile"
-                className="h-10 w-10 rounded-full object-cover"
-                onError={() => setIsImageError(true)}
-              />
-            ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground/8 text-xs text-muted-foreground">
-                {authorInfo?.nickname?.charAt(0) || "작"}
-              </div>
-            )}
+          )}
+          <div className="min-w-0">
+            <h3 className={cn("truncate font-semibold text-foreground", isCompact ? "text-xs" : "text-[15px]")}>
+              {authorInfo?.nickname || "작성자"}
+            </h3>
+            {!isCompact && <p className="text-xs text-muted-foreground">팔로워 {followerCount}명</p>}
           </div>
+        </div>
 
-          <Separator className="my-4" />
-
-          <div className="flex flex-col gap-2">
+        {!isSelf && (
+          <div className="flex shrink-0 items-center gap-1">
             <Button
               type="button"
-              variant="secondary"
+              variant="outline"
               size="sm"
               className={cn(
-                "w-full rounded-xl text-xs font-medium transition",
-                isFollowing
-                  ? "bg-red-500/15 text-red-500 dark:text-red-400 hover:bg-red-500/25"
-                  : "bg-foreground/6 text-foreground hover:bg-foreground/10",
-                !isAuthed && "opacity-60 cursor-not-allowed hover:bg-foreground/6",
+                isCompact ? "h-7 w-7 rounded-md p-0" : "h-9 rounded-lg px-3 text-xs",
+                isFollowing && "border-red-500/30 text-red-500 hover:bg-red-500/10 hover:text-red-500",
               )}
-              onClick={toggleFollow}
-              disabled={!isAuthed || isLoading || user?.id === authorInfo?.id}
-              title={!isAuthed ? "로그인이 필요합니다." : undefined}
+              onClick={handleFollow}
+              disabled={isAuthed && isLoading}
+              title={isFollowing ? "언팔로우" : "팔로우"}
             >
-              {isFollowing ? <UserMinus className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
-              {!isAuthed ? "로그인 필요" : isFollowing ? "언팔로우" : "팔로우"}
+              {isFollowing ? <UserMinus className="h-3 w-3" /> : <UserPlus className="h-3 w-3" />}
+              {!isCompact && <span className="ml-1">{isFollowing ? "언팔로우" : "팔로우"}</span>}
             </Button>
-
             <Button
               type="button"
-              variant="secondary"
+              variant="outline"
               size="sm"
-              className={cn(
-                "w-full rounded-xl bg-foreground/6 text-xs font-medium text-foreground hover:bg-foreground/10",
-                !isAuthed && "opacity-60 cursor-not-allowed hover:bg-foreground/6",
-              )}
+              className={isCompact ? "h-7 w-7 rounded-md p-0" : "h-9 rounded-lg px-3 text-xs"}
               onClick={handleDm}
-              disabled={!isAuthed || getOrCreate.isPending || user?.id === authorInfo?.id}
-              title={!isAuthed ? "로그인이 필요합니다." : undefined}
+              disabled={isAuthed && getOrCreate.isPending}
+              title="DM"
             >
-              <MessageCircle className="h-3.5 w-3.5" />
-              {!isAuthed ? "로그인 필요" : "DM"}
+              <MessageCircle className="h-3 w-3" />
+              {!isCompact && <span className="ml-1">DM</span>}
             </Button>
           </div>
-        </CardContent>
-      </Card>
-    </aside>
+        )}
+      </div>
+    </section>
   );
 }
 

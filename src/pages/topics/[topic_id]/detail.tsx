@@ -1,157 +1,74 @@
-import { Button } from "@/components/ui";
-import { ArrowLeft, Eye, Pencil, Trash2 } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useEffect, useRef } from "react";
-import { useAuthStore } from "@/stores";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTrigger,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from "@/components/ui/alert-dialog";
-import { Separator } from "@/components/ui";
-import { useTopic, useTopicDetail, useUserInfo } from "@/hooks";
-import { AppEditor, AuthorProfileCard, AppCommentSection } from "@/components/common";
-import { toast } from "sonner";
+import { TopicDetailView } from "@/components/topics/TopicDetailView";
+import { DEFAULT_CATEGORY } from "@/constants/category.constant";
 import { topicApi } from "@/api";
-import { queryClient } from "@/lib/queryClient";
 import { topicKeys } from "@/constants/queryKeys";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
+import { useTopic, useTopicDetail } from "@/hooks";
+import { queryClient } from "@/lib/queryClient";
+import { getVisitorKey } from "@/lib/visitorKey";
+import { useBrowseCategoryStore } from "@/stores";
+import { useEffect, useRef } from "react";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 
-dayjs.extend(relativeTime);
-dayjs.locale("ko");
+type DetailLocationState = {
+  fromCategory?: string;
+};
 
 export function TopicDetail() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const location = useLocation();
+  const browseCategory = useBrowseCategoryStore((s) => s.category);
+  const setBrowseCategory = useBrowseCategoryStore((s) => s.setCategory);
   const { id } = useParams();
-  const topicId = Number(id);
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: topic } = useTopicDetail(id);
-  const { userInfo: authorInfo } = useUserInfo(topic?.author);
   const { deleteTopic } = useTopic();
   const viewCountedRef = useRef(false);
 
+  const goHome = () => {
+    const fromCategory =
+      (location.state as DetailLocationState | null)?.fromCategory ??
+      topic?.category ??
+      browseCategory ??
+      DEFAULT_CATEGORY;
+    navigate({ pathname: "/", search: `?category=${encodeURIComponent(fromCategory)}` });
+  };
+
   useEffect(() => {
-    // 이미 카운트했거나 본인 글이면 스킵
-    if (!id || viewCountedRef.current) return;
-    if (topic && topic.author === user?.id) return;
-    if (!topic) return; // topic 로드 후 author 확인
+    if (!topic?.category) return;
+    setBrowseCategory(topic.category);
+    if (searchParams.get("category") !== topic.category) {
+      setSearchParams({ category: topic.category }, { replace: true });
+    }
+  }, [topic?.category, searchParams, setBrowseCategory, setSearchParams]);
+
+  useEffect(() => {
+    if (!id || viewCountedRef.current || !topic) return;
     viewCountedRef.current = true;
-    topicApi.incrementViewCount(id).then(() => {
-      queryClient.invalidateQueries({ queryKey: topicKeys._def });
-    });
-  }, [id, topic, user?.id]);
+    getVisitorKey().then((visitorKey) =>
+      topicApi.incrementViewCount(id, visitorKey).then(() => {
+        queryClient.invalidateQueries({ queryKey: topicKeys._def });
+      }),
+    );
+  }, [id, topic]);
 
   const handleDelete = async () => {
     deleteTopic.mutate(Number(id));
-    navigate("/");
+    goHome();
     toast.success("토픽이 삭제되었습니다.");
   };
 
-  function formatCreatedAt(createdAt: string) {
-    const date = dayjs(createdAt);
-    return date.isSame(dayjs(), "day") ? date.fromNow() : date.format("YYYY. MM. DD");
-  }
+  if (!topic) return null;
 
   return (
-    <main className="w-full min-h-screen flex flex-col relative">
-      <div
-        className="relative w-full h-60 md:h-100 bg-cover bg-[50%_35%] bg-muted"
-        style={{ backgroundImage: `url(${topic?.thumbnail})` }}
-      >
-        {/* 뒤로 가기 */}
-        <div className="absolute top-6 left-6 z-10 flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="border-border/60 bg-background/80 backdrop-blur-sm hover:bg-background"
-            onClick={() => navigate("/")}
-          >
-            <ArrowLeft />
-          </Button>
-          {/* 토픽을 작성한 사람의 user_id와 로그인한 사람의 user_id가 같은 경우에만 보이도록 한다. */}
-          {topic?.author === user?.id && (
-            <>
-              <Button
-                variant="outline"
-                size="icon"
-                className="border-border/60 bg-primary/15 text-primary backdrop-blur-sm hover:bg-primary/25"
-                onClick={() => navigate(`/topics/${id}/update`)}
-              >
-                <Pencil />
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="icon" className="!bg-red-800/50">
-                    <Trash2 />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>정말 해당 토픽을 삭제하시겠습니까?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      삭제하시면 해당 토픽의 모든 내용이 영구적으로 삭제되어 복구할 수 없습니다.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>닫기</AlertDialogCancel>
-                    <AlertDialogAction className="bg-red-800/50 text-white hover:bg-red-700/50" onClick={handleDelete}>
-                      삭제
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </>
-          )}
-        </div>
-        {/* 좌, 우, 하단 그라데이션 */}
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-transparent"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
-        <div className="absolute inset-0 bg-gradient-to-l from-background via-transparent to-transparent"></div>
-      </div>
-
-      <section className="relative w-full flex flex-col items-center -mt-40 px-4">
-        <span className="mb-4 text-sm font-medium text-primary"># {topic?.category}</span>
-        <h1 className="scroll-m-20 text-center font-extrabold tracking-tight text-xl sm:text-2xl md:text-4xl text-foreground drop-shadow-sm">
-          {topic?.title}
-        </h1>
-        <Separator className="!w-6 my-6 bg-primary" />
-        <span className="text-sm text-muted-foreground">{formatCreatedAt(topic?.created_at ?? "")}</span>
-        <div className="flex items-center gap-1.5 mt-2 text-muted-foreground">
-          <Eye size={14} />
-          <span className="text-sm">{topic?.view_count ?? 0}</span>
-        </div>
-      </section>
-
-      {/* 에디터 내용을 불러와 렌더링 */}
-      <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-6 px-4 pt-16 pb-6 lg:flex-row lg:items-start lg:justify-center">
-        <div className="min-w-0 flex-1 lg:max-w-[840px]">
-          <div className="min-h-[600px]">
-            {topic?.content && <AppEditor content={JSON.parse(topic?.content ?? "")} readonly />}
-          </div>
-
-          {/* 작성자 카드 - 모바일에서만 에디터 바로 아래 표시 */}
-          <div className="mt-16 mb-4 lg:hidden">
-            <AuthorProfileCard authorInfo={authorInfo} />
-          </div>
-
-          {/* 댓글 섹션 */}
-          <div className="mt-6 lg:mt-8">
-            <AppCommentSection topicId={topicId} topicAuthorId={topic?.author} topicTitle={topic?.title} />
-          </div>
-        </div>
-
-        {/* 작성자 카드 - 데스크탑에서만 우측 표시 */}
-        <div className="hidden lg:block">
-          <AuthorProfileCard authorInfo={authorInfo} />
-        </div>
-      </div>
-    </main>
+    <TopicDetailView
+      topic={topic}
+      showActions
+      onBack={goHome}
+      onEdit={() =>
+        navigate(`/topics/${id}/update${topic.category ? `?category=${encodeURIComponent(topic.category)}` : ""}`)
+      }
+      onDelete={handleDelete}
+    />
   );
 }
