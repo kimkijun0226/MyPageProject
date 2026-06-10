@@ -1,7 +1,7 @@
-export { AppHeader } from "./AppHeader";
-export { AppHeaderMenu } from "./AppHeaderMenu";
-export { AppFooter } from "./AppFooter";
+export { AppShell } from "./AppShell";
 export { AppSidebar } from "./AppSidebar";
+export { SidebarDmPanel } from "./SidebarDmPanel";
+export { AppFooter } from "./AppFooter";
 export { AppEditor } from "./AppEditor";
 export { AppFileUpload } from "./AppFileUpload";
 export { AppDraftsDialog } from "./AppDraftsDialog";

@@ -142,14 +142,9 @@
 
   .app-layout {
     width: 100%;
-    padding-top: 106px;
     flex: 1;
     display: flex;
     flex-direction: column;
-
-    @media (min-width: 1024px) {
-      padding-top: 60px;
-    }
   }
 }
 
@@ -189,4 +184,18 @@
 .dark .bn-inline-content {
   --bn-colors-editor-text: oklch(0.985 0 0) !important;
   color: oklch(0.985 0 0) !important;
+}
+
+@layer base {
+  button:not(:disabled),
+  [role="button"],
+  a[href],
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
 }

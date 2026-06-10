@@ -1,5 +1,4 @@
 import type { UserInfo } from "@/api";
-import { useTheme } from "@/components/theme-context";
 import {
   Bell,
   BookOpen,
@@ -8,9 +7,7 @@ import {
   Heart,
   Info,
   LogOut,
-  Moon,
   Settings,
-  Sun,
   UserPen,
   X,
 } from "lucide-react";
@@ -31,8 +28,6 @@ interface AppHeaderMenuProps {
 
 function AppHeaderMenu({ isOpen, onLogout, onOpenChange, user, userInfo }: AppHeaderMenuProps) {
   const navigate = useNavigate();
-  const { theme, setTheme } = useTheme();
-  const isDark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
 
   const menuItems = [
     {
@@ -96,10 +91,7 @@ function AppHeaderMenu({ isOpen, onLogout, onOpenChange, user, userInfo }: AppHe
       >
         {/* 상단 헤더 */}
         <div className="flex items-center justify-between px-4 py-3.5 border-b border-border">
-          <div className="flex items-center gap-2">
-            <img src="/assets/my-page-icon.png" alt="logo" className="h-6 w-6 drop-shadow-sm" />
-            <span className="text-sm font-bold text-primary">My Page</span>
-          </div>
+          <span className="text-sm font-bold text-primary">My Page</span>
           <button
             type="button"
             className="rounded-md p-1 text-muted-foreground transition hover:bg-foreground/10 hover:text-foreground"
@@ -170,23 +162,6 @@ function AppHeaderMenu({ isOpen, onLogout, onOpenChange, user, userInfo }: AppHe
                 </div>
               </>
             )}
-          </div>
-
-          <div className="my-3 mx-4 h-px bg-border" />
-
-          {/* 테마 토글 */}
-          <div className="px-3">
-            <button
-              type="button"
-              className="inline-flex w-full items-center justify-between gap-2.5 rounded-lg border border-border bg-foreground/5 px-3 py-2.5 text-sm text-foreground/80 transition hover:bg-foreground/10 hover:text-foreground"
-              onClick={() => setTheme(isDark ? "light" : "dark")}
-            >
-              <span className="inline-flex items-center gap-2.5">
-                {isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-                {isDark ? "다크 모드" : "라이트 모드"}
-              </span>
-              <span className="text-xs text-muted-foreground">{isDark ? "ON" : "OFF"}</span>
-            </button>
           </div>
 
           {user?.id && (

@@ -9,14 +9,16 @@ import "@blocknote/core/fonts/inter.css";
 import type { Block } from "@blocknote/core";
 import { useEffect } from "react";
 import { useTheme } from "@/components/theme-context";
+import { cn } from "@/lib/utils";
 
 interface AppEditorProps {
   content?: Block[];
   setContent?: (content: Block[]) => void;
   readonly?: boolean;
+  className?: string;
 }
 
-export function AppEditor({ content, setContent, readonly }: AppEditorProps) {
+export function AppEditor({ content, setContent, readonly, className }: AppEditorProps) {
   const locale = ko;
   const { theme } = useTheme();
   const resolvedTheme =
@@ -45,18 +47,26 @@ export function AppEditor({ content, setContent, readonly }: AppEditorProps) {
       }
     }
   }, [content, editor]);
-  // Render the editor
   return (
-    <BlockNoteView
-      editor={editor}
-      editable={!readonly}
-      lang="ko"
-      theme={resolvedTheme}
-      onChange={() => {
-        if (!readonly) {
-          setContent?.(editor.document);
-        }
-      }}
-    />
+    <div
+      className={cn(
+        "flex min-h-0 flex-col",
+        !readonly && "[&_.bn-editor]:min-h-full [&_.bn-container]:min-h-full",
+        className,
+      )}
+    >
+      <BlockNoteView
+        editor={editor}
+        editable={!readonly}
+        lang="ko"
+        theme={resolvedTheme}
+        className={cn(!readonly && "min-h-full flex-1")}
+        onChange={() => {
+          if (!readonly) {
+            setContent?.(editor.document);
+          }
+        }}
+      />
+    </div>
   );
 }

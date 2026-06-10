@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="280" viewBox="0 0 1440 280" fill="none">
+  <rect width="1440" height="280" fill="#1C1C1F"/>
+  <rect width="1440" height="280" fill="url(#grid)" opacity="0.3"/>
+  <path d="M0 200L220 150L400 185L620 120L880 175L1100 130L1440 185V280H0V200Z" fill="#26262B"/>
+  <path d="M0 225L160 190L340 210L500 170L720 215L960 165L1200 200L1440 175V280H0V225Z" fill="#2A2A30"/>
+  <defs>
+    <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
+      <path d="M28 0H0V28" stroke="#FFFFFF" stroke-opacity="0.035"/>
+    </pattern>
+  </defs>
+</svg>

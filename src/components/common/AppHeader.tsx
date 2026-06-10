@@ -2,14 +2,13 @@ import { useState, useRef, useEffect } from "react";
 import { NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore, useSearchStore } from "@/stores";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, CircleUser, MessageCircle, Moon, Search, Sun } from "lucide-react";
+import { ChevronLeft, ChevronRight, CircleUser, MessageCircle, Search } from "lucide-react";
 import { useUser } from "@/hooks";
 import { useDmUnreadCount } from "@/hooks";
 import { AppHeaderMenu } from "./AppHeaderMenu";
 import { AppNotificationDropdown } from "./AppNotificationDropDown";
 import { CLASS_CATEGORY } from "@/constants/category.constant";
 import { cn } from "@/lib/utils";
-import { useTheme } from "@/components/theme-context";
 import { IconTooltip } from "./IconTooltip";
 
 function AppHeader() {
@@ -21,8 +20,6 @@ function AppHeader() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-  const { theme, setTheme } = useTheme();
-  const isDark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { searchOpen, setSearchOpen } = useSearchStore();
@@ -83,24 +80,12 @@ function AppHeader() {
             className="inline-flex cursor-pointer items-center gap-2.5 group"
             onClick={() => navigate({ pathname: "/", search: "" })}
           >
-            <img src="/assets/my-page-icon.png" alt="@logo" className="h-8 w-8 sm:h-8 sm:w-8 drop-shadow-sm" />
-            <span className="hidden sm:inline-block text-[20px] sm:text-[22px] font-bold tracking-tight text-primary dark:text-white">
+            <span className="text-[20px] sm:text-[22px] font-bold tracking-tight text-primary dark:text-white">
               My Page
             </span>
           </button>
 
           <div className="flex items-center gap-2">
-            {/* 테마 토글 */}
-            <IconTooltip label={isDark ? "라이트 모드" : "다크 모드"}>
-              <button
-                type="button"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border shadow-sm transition border-primary/30 bg-white text-primary/70 shadow-primary/10 hover:border-primary/50 hover:bg-primary/10 hover:text-primary dark:border-border dark:bg-foreground/5 dark:text-foreground/60 dark:hover:bg-foreground/10 dark:hover:text-foreground dark:shadow-none"
-                onClick={() => setTheme(isDark ? "light" : "dark")}
-              >
-                {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              </button>
-            </IconTooltip>
-
             {/* DM - 로그인 사용자만, /dm 활성화 표시 */}
             {user?.id && (
               <IconTooltip label="DM">

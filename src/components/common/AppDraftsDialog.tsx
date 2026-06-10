@@ -23,8 +23,9 @@ export function AppDraftsDialog({ children }: AppDraftsDialogProps) {
   const { draftTopics } = useTopic();
   const navigate = useNavigate();
 
-  const handleDraftClick = (id: number) => {
-    navigate(`/topics/${id}/create`);
+  const handleDraftClick = (id: number, category?: string | null) => {
+    const query = category ? `?category=${encodeURIComponent(category)}` : "";
+    navigate(`/topics/${id}/create${query}`);
   };
 
   return (
@@ -55,7 +56,7 @@ export function AppDraftsDialog({ children }: AppDraftsDialogProps) {
                   <div
                     key={draft.id}
                     className="w-full flex items-center justify-between hover:bg-card/50 gap-10 py-2 px-4 rounded-md cursor-pointer"
-                    onClick={() => handleDraftClick(draft.id)}
+                    onClick={() => handleDraftClick(draft.id, draft.category)}
                   >
                     <div className="flex items-start gap-2">
                       <Badge className="w-5 h-5 mt-[3px] rounded-sm  aspect-square bg-[#E25F24] hover:bg-[#E25F24] text-foreground">
