@@ -5,7 +5,7 @@ import { persist } from "zustand/middleware";
 interface User {
   id: string;
   email: string;
-  role: string;
+  isAdmin: boolean;
 }
 
 interface AuthStore {
@@ -31,11 +31,24 @@ export const useAuthStore = create<AuthStore>()(
   ),
 );
 interface SearchStore {
+  searchQuery: string;
+  searchCategory: string;
   searchOpen: boolean;
+  setSearchQuery: (v: string) => void;
+  setSearchCategory: (v: string) => void;
   setSearchOpen: (v: boolean) => void;
 }
 
 export const useSearchStore = create<SearchStore>()((set) => ({
+  searchQuery: "",
+  searchCategory: "",
   searchOpen: false,
+  setSearchQuery: (v) => set({ searchQuery: v }),
+  setSearchCategory: (v) => set({ searchCategory: v }),
   setSearchOpen: (v) => set({ searchOpen: v }),
 }));
+
+export { useSidebarStore, SIDEBAR_WIDTH_COLLAPSED, SIDEBAR_WIDTH_EXPANDED } from "./sidebarStore";
+export type { SidebarNavTab } from "./sidebarStore";
+export { useCategoryReadStore, getCategoryUnreadCount, formatCountBadge } from "./categoryReadStore";
+export { useBrowseCategoryStore } from "./browseCategoryStore";
