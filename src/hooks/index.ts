@@ -1,5 +1,6 @@
 export { useAuth } from "./useAuth";
 export { useTopic, useTopicDetail, useMyTopics, useCommunityTopics, useSearchTopics } from "./useTopic";
+export { useResumeTopic } from "./useResumeTopic";
 export { useImageUpload } from "./useImageUpload";
 export { useUser, useUserInfo } from "./useUser";
 export { useFollow } from "./useFollow";
@@ -7,3 +8,4 @@ export { useNotification } from "./useNotification";
 export { useDmRooms, useDmMessages, useGetOrCreateRoom, useSendMessage, useDmUnreadCount } from "./useDm";
 export { useComments, useCreateComment, useDeleteComment, useToggleCommentLike } from "./useComment";
 export { useTopicLike, useToggleTopicLike, useShareTopic } from "./useLike";
+export { useCategoryUnreadCounts } from "./useCategoryUnread";
