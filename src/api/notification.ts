@@ -12,13 +12,17 @@ export type Notification = {
   link: string;
   thumbnail: string | null;
   created_at: string;
+  sender?: { nickname: string | null } | null;
 };
 
 // 알림 목록 조회
 const getNotifications = async (): Promise<Notification[]> => {
-  const { data, error } = await supabase.from("notification").select("*").order("created_at", { ascending: false });
+  const { data, error } = await supabase
+    .from("notification")
+    .select("*, sender:user!sender_id(nickname)")
+    .order("created_at", { ascending: false });
   if (error) throw error;
-  return data as Notification[];
+  return (data ?? []) as Notification[];
 };
 
 // 읽지 않은 알림 수 조회

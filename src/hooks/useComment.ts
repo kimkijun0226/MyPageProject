@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { commentApi } from "@/api";
-import { notificationApi } from "@/api";
+import { commentApi, notificationApi, userApi } from "@/api";
+import { buildCommentNotificationContent, buildCommentLikeNotificationContent } from "@/lib/notificationContent";
 import { commentKeys } from "@/constants/queryKeys";
 import { useAuthStore } from "@/stores";
 
@@ -26,16 +26,9 @@ export function useCreateComment(topicId: number, topicAuthorId?: string, topicT
       if (!user || !topicAuthorId) return;
 
       const notifType = variables.parent_id ? "reply" : "comment";
-      const titlePreview = topicTitle
-        ? `"${topicTitle.length > 20 ? topicTitle.slice(0, 20) + "…" : topicTitle}"`
-        : null;
-      const commentPreview = variables.content.length > 30 ? variables.content.slice(0, 30) + "…" : variables.content;
-      const content = [
-        titlePreview
-          ? `${titlePreview} 글에 ${notifType === "reply" ? "답글" : "댓글"}을 남겼습니다.`
-          : `${notifType === "reply" ? "답글" : "댓글"}을 남겼습니다.`,
-        `"${commentPreview}"`,
-      ].join("\n");
+      const senderInfo = await userApi.getUserInfo(user.id);
+      const nickname = senderInfo?.nickname?.trim() || "회원";
+      const content = buildCommentNotificationContent(nickname, topicTitle, notifType);
 
       try {
         await notificationApi.createNotification({
@@ -71,7 +64,6 @@ export function useToggleCommentLike(topicId: number) {
       commentId,
       isLiked,
       commentAuthorId,
-      commentContent,
     }: {
       commentId: number;
       isLiked: boolean;
@@ -84,14 +76,13 @@ export function useToggleCommentLike(topicId: number) {
       } else {
         await commentApi.likeComment(commentId, user.id);
         if (commentAuthorId) {
-          const preview = commentContent
-            ? `"${commentContent.length > 30 ? commentContent.slice(0, 30) + "…" : commentContent}"`
-            : null;
+          const senderInfo = await userApi.getUserInfo(user.id);
+          const nickname = senderInfo?.nickname?.trim() || "회원";
           await notificationApi.createNotification({
             receiver_id: commentAuthorId,
             sender_id: user.id,
             type: "comment_like",
-            content: preview ? `${preview} 댓글에 좋아요를 눌렀습니다.` : "회원님의 댓글을 좋아합니다.",
+            content: buildCommentLikeNotificationContent(nickname),
             link: `/topics/${topicId}/detail`,
           });
         }

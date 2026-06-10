@@ -1,14 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { likeApi, userApi } from "@/api";
-import { notificationApi } from "@/api";
+import { likeApi, notificationApi, userApi } from "@/api";
+import { buildTopicLikeNotificationContent } from "@/lib/notificationContent";
 import { likeKeys } from "@/constants/queryKeys";
 import { useAuthStore } from "@/stores";
+import { getVisitorKey } from "@/lib/visitorKey";
 
 export function useTopicLike(topicId: number) {
   const { user } = useAuthStore();
   return useQuery({
     queryKey: likeKeys.topic(topicId).queryKey,
-    queryFn: () => likeApi.getTopicLikeInfo(topicId, user?.id),
+    queryFn: async () => {
+      const visitorKey = await getVisitorKey();
+      return likeApi.getTopicLikeInfo(topicId, user?.id, visitorKey);
+    },
     enabled: !!topicId,
   });
 }
@@ -18,29 +22,23 @@ export function useToggleTopicLike(topicId: number, topicAuthorId?: string, topi
   const { user } = useAuthStore();
 
   return useMutation({
-    mutationFn: async (isLiked: boolean) => {
-      if (!user) throw new Error("로그인이 필요합니다.");
-      if (isLiked) {
-        await likeApi.unlikeTopic(topicId, user.id);
-      } else {
-        await likeApi.likeTopic(topicId, user.id);
-        if (topicAuthorId) {
-          const titlePreview = topicTitle
-            ? `"${topicTitle.length > 24 ? topicTitle.slice(0, 24) + "…" : topicTitle}"`
-            : null;
-          const senderInfo = await userApi.getUserInfo(user.id);
-          const senderName = senderInfo?.nickname || user.email;
-          await notificationApi.createNotification({
-            receiver_id: topicAuthorId,
-            sender_id: user.id,
-            type: "topic_like",
-            content: titlePreview
-              ? `${senderName}님이 ${titlePreview} 글에 좋아요를 눌렀습니다.`
-              : `${senderName}님이 회원님의 글을 좋아합니다.`,
-            link: `/topics/${topicId}/detail`,
-          });
-        }
+    mutationFn: async () => {
+      const visitorKey = await getVisitorKey();
+      const liked = await likeApi.toggleTopicLike(topicId, user?.id, visitorKey);
+
+      if (liked && user?.id && topicAuthorId && topicAuthorId !== user.id) {
+        const senderInfo = await userApi.getUserInfo(user.id);
+        const nickname = senderInfo?.nickname?.trim() || "회원";
+        await notificationApi.createNotification({
+          receiver_id: topicAuthorId,
+          sender_id: user.id,
+          type: "topic_like",
+          content: buildTopicLikeNotificationContent(nickname, topicTitle),
+          link: `/topics/${topicId}/detail`,
+        });
       }
+
+      return liked;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: likeKeys.topic(topicId).queryKey });
@@ -50,6 +48,7 @@ export function useToggleTopicLike(topicId: number, topicAuthorId?: string, topi
 
 export function useShareTopic(topicId: number) {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
 
   return useMutation({
     mutationFn: async (url: string) => {
@@ -58,15 +57,11 @@ export function useShareTopic(topicId: number) {
       } else {
         await navigator.clipboard.writeText(url);
       }
-      await likeApi.incrementShareCount(topicId);
+      const visitorKey = await getVisitorKey();
+      await likeApi.recordTopicShare(topicId, user?.id, visitorKey);
     },
     onSuccess: () => {
-      // 공유수 즉시 반영
-      queryClient.setQueryData(
-        likeKeys.topic(topicId).queryKey,
-        (prev: { count: number; isLiked: boolean; shareCount: number } | undefined) =>
-          prev ? { ...prev, shareCount: prev.shareCount + 1 } : prev,
-      );
+      queryClient.invalidateQueries({ queryKey: likeKeys.topic(topicId).queryKey });
     },
   });
 }

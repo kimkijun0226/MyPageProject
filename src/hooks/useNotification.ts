@@ -50,7 +50,9 @@ export const useNotification = () => {
           },
           (payload) => {
             queryClient.invalidateQueries({ queryKey: ["notification"] });
-            toast.info(payload.new.content);
+            const content = String((payload.new as { content?: string }).content ?? "");
+            const title = content.split("\n").map((l) => l.trim()).find(Boolean) ?? "새 알림";
+            toast.info(title);
           },
         )
         .subscribe((status, err) => {

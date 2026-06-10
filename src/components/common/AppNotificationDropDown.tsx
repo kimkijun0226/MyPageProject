@@ -7,6 +7,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/ko";
 import { cn } from "@/lib/utils";
 import type { NotificationType } from "@/api";
+import { getNotificationDisplayPreview, getNotificationDisplayTitle } from "@/lib/notificationContent";
 
 dayjs.extend(relativeTime);
 dayjs.locale("ko");
@@ -50,16 +51,6 @@ export function AppNotificationDropdown() {
     markAsRead.mutate(id);
     setIsOpen(false);
     navigate(link);
-  };
-
-  const parseContent = (content: string) => {
-    const lines = content
-      .split("\n")
-      .map((l) => l.trim())
-      .filter(Boolean);
-    if (lines.length === 0) return { title: content, preview: "" };
-    if (lines.length === 1) return { title: lines[0], preview: "" };
-    return { title: lines[0], preview: lines.slice(1).join(" ") };
   };
 
   return (
@@ -128,21 +119,16 @@ export function AppNotificationDropdown() {
                       </span>
                     </div>
 
-                    {(() => {
-                      const { title, preview } = parseContent(notification.content);
-                      return (
-                        <div className="mt-1.5 min-w-0">
-                          <p className="text-sm font-semibold text-foreground/90 line-clamp-2 leading-snug">
-                            {title}
-                          </p>
-                          {preview ? (
-                            <p className="mt-0.5 text-xs text-foreground/55 line-clamp-2 leading-snug">
-                              {preview}
-                            </p>
-                          ) : null}
-                        </div>
-                      );
-                    })()}
+                    <div className="mt-1.5 min-w-0">
+                      <p className="text-sm font-semibold text-foreground/90 line-clamp-2 leading-snug">
+                        {getNotificationDisplayTitle(notification)}
+                      </p>
+                      {getNotificationDisplayPreview(notification.content) ? (
+                        <p className="mt-0.5 text-xs text-foreground/55 line-clamp-2 leading-snug">
+                          {getNotificationDisplayPreview(notification.content)}
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
                 </button>
               ))
