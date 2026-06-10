@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useBrowseCategoryStore } from "@/stores";
 import { Card, Separator } from "../ui";
 import { Eye, Heart, Share2 } from "lucide-react";
 import dayjs from "dayjs";
@@ -7,7 +8,7 @@ import "dayjs/locale/ko";
 import type { Topic } from "@/types";
 import { useShareTopic, useToggleTopicLike, useTopicLike, useUserInfo } from "@/hooks";
 import { toast } from "sonner";
-import { useAuthStore } from "@/stores";
+import { TOPIC_CARD_HEIGHT_CLASS } from "./topic-grid";
 
 dayjs.extend(relativeTime);
 dayjs.locale("ko");
@@ -59,19 +60,16 @@ function formatCreatedAt(createdAt: string) {
 
 export function NewTopicCard({ props }: Props) {
   const navigate = useNavigate();
+  const setBrowseCategory = useBrowseCategoryStore((s) => s.setCategory);
+  const topicCategory = props.category;
   const { userInfo: authorInfo } = useUserInfo(props?.author);
   const { data } = useTopicLike(props.id);
-  const { user } = useAuthStore();
   const toggleLike = useToggleTopicLike(props.id, props?.author, props.title);
   const shareTopic = useShareTopic(props.id);
 
   const handleLike = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    if (!user) {
-      toast.error("로그인이 필요합니다.");
-      return;
-    }
-    toggleLike.mutate(data?.isLiked ?? false);
+    toggleLike.mutate();
   };
 
   const handleShare = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -83,42 +81,43 @@ export function NewTopicCard({ props }: Props) {
 
   return (
     <Card
-      className="w-full h-fit p-4 gap-4 cursor-pointer hover:scale-102 transition-all duration-200 ease-out bg-card border border-[#7c79c7]/35 shadow-[0_2px_12px_rgba(124,121,199,0.28)] hover:shadow-[0_4px_18px_rgba(124,121,199,0.45)]"
-      onClick={() => navigate(`/topics/${props.id}/detail`)}
+      className={`flex w-full ${TOPIC_CARD_HEIGHT_CLASS} cursor-pointer flex-col gap-3 border border-border bg-card p-4 shadow-sm transition-all duration-200 ease-out hover:scale-[1.01] hover:shadow-md`}
+      onClick={() => {
+        setBrowseCategory(topicCategory);
+        navigate(`/topics/${props.id}/detail?category=${encodeURIComponent(topicCategory)}`, {
+          state: { fromCategory: topicCategory },
+        });
+      }}
     >
-      <div className="flex items-start gap-4">
-        <div className="flex-1 flex flex-col items-start gap-4">
-          {/* 제목 */}
-          <h3 className="h-12 text-base font-semibold tracking-tight line-clamp-2">
-            <p>{props.title}</p>
-          </h3>
-          {/* 본문 */}
-          <p className="line-clamp-3 text-muted-foreground text-sm">{extractTextFromContent(props.content)}</p>
+      <div className="flex min-h-0 flex-1 items-start gap-3">
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <h3 className="line-clamp-2 text-base font-semibold tracking-tight">{props.title}</h3>
+          <p className="line-clamp-3 text-sm text-muted-foreground">{extractTextFromContent(props.content)}</p>
         </div>
         <img
           src={props.thumbnail || ""}
           alt="@THUMBNAIL"
-          className="w-[130px] h-[130px] aspect-square rounded-lg object-cover"
+          className="h-[108px] w-[108px] shrink-0 rounded-lg object-cover"
         />
       </div>
       <Separator />
-      <div className="w-full flex justify-between items-center text-xs text-muted-foreground">
-        <div className="flex items-center gap-2">
+      <div className="flex w-full shrink-0 items-center justify-between text-xs text-muted-foreground">
+        <div className="flex min-w-0 items-center gap-2">
           <img
             src={authorInfo?.profile_image || undefined}
             alt="author profile"
-            className="w-5 h-5 rounded-full object-cover shrink-0"
+            className="h-5 w-5 shrink-0 rounded-full object-cover"
           />
-          <p className="text-xs truncate min-w-0">{authorInfo?.nickname}</p>
+          <p className="truncate text-xs">{authorInfo?.nickname}</p>
         </div>
-        <div className="flex items-center gap-2 text-muted-foreground">
+        <div className="flex shrink-0 items-center gap-2 text-muted-foreground">
           <div className="flex items-center gap-1">
             <Eye size={12} />
             <span className="text-xs">{props.view_count ?? 0}</span>
           </div>
           <button
             type="button"
-            className="flex items-center gap-1 cursor-pointer hover:scale-110 transition-transform duration-200 ease-out"
+            className="flex cursor-pointer items-center gap-1 transition-transform duration-200 ease-out hover:scale-110"
             onClick={(e) => handleLike(e)}
           >
             <Heart size={13} className={`text-rose-400 ${data?.isLiked ? "fill-rose-400" : ""}`} />
@@ -126,13 +125,13 @@ export function NewTopicCard({ props }: Props) {
           </button>
           <button
             type="button"
-            className="flex items-center gap-1 cursor-pointer hover:scale-110 transition-transform duration-200 ease-out"
+            className="flex cursor-pointer items-center gap-1 transition-transform duration-200 ease-out hover:scale-110"
             onClick={(e) => handleShare(e)}
           >
             <Share2 size={13} className="text-muted-foreground" />
             <span className="text-xs">{props.share_count || 0}</span>
           </button>
-          <span className="text-xs ml-auto">{formatCreatedAt(props.created_at)}</span>
+          <span className="text-xs">{formatCreatedAt(props.created_at)}</span>
         </div>
       </div>
     </Card>
