@@ -1,4 +1,5 @@
 import supabase from "@/lib/supabase";
+import { getVisitorKey } from "@/lib/visitorKey";
 
 export interface TopicLikeInfo {
   count: number;
@@ -6,14 +7,18 @@ export interface TopicLikeInfo {
   shareCount: number;
 }
 
-const getTopicLikeInfo = async (topicId: number, userId?: string): Promise<TopicLikeInfo> => {
+const getTopicLikeInfo = async (topicId: number, userId?: string, visitorKey?: string): Promise<TopicLikeInfo> => {
+  const key = visitorKey ?? (await getVisitorKey());
+
   const [{ data: likeData }, { data: topicData }] = await Promise.all([
-    supabase.from("topic_like").select("user_id").eq("topic_id", topicId),
+    supabase.from("topic_like").select("user_id, visitor_key").eq("topic_id", topicId),
     supabase.from("topic").select("share_count").eq("id", topicId).single(),
   ]);
 
   const likes = likeData ?? [];
-  const isLiked = !!userId && likes.some((l) => l.user_id === userId);
+  const isLiked = userId
+    ? likes.some((l) => l.user_id === userId)
+    : likes.some((l) => l.visitor_key === key);
 
   return {
     count: likes.length,
@@ -22,23 +27,25 @@ const getTopicLikeInfo = async (topicId: number, userId?: string): Promise<Topic
   };
 };
 
-const likeTopic = async (topicId: number, userId: string): Promise<void> => {
-  const { error } = await supabase.from("topic_like").insert({ topic_id: topicId, user_id: userId });
+const toggleTopicLike = async (topicId: number, userId?: string, visitorKey?: string): Promise<boolean> => {
+  const key = visitorKey ?? (await getVisitorKey());
+  const { data, error } = await supabase.rpc("toggle_topic_like", {
+    p_topic_id: topicId,
+    p_visitor_key: userId ? null : key,
+    p_user_id: userId ?? null,
+  });
+  if (error) throw error;
+  return Boolean(data);
+};
+
+const recordTopicShare = async (topicId: number, userId?: string, visitorKey?: string): Promise<void> => {
+  const key = visitorKey ?? (await getVisitorKey());
+  const { error } = await supabase.rpc("record_topic_share", {
+    p_topic_id: topicId,
+    p_visitor_key: userId ? null : key,
+    p_user_id: userId ?? null,
+  });
   if (error) throw error;
 };
 
-const unlikeTopic = async (topicId: number, userId: string): Promise<void> => {
-  const { error } = await supabase.from("topic_like").delete().eq("topic_id", topicId).eq("user_id", userId);
-  if (error) throw error;
-};
-
-const incrementShareCount = async (topicId: number): Promise<void> => {
-  const { data } = await supabase.from("topic").select("share_count").eq("id", topicId).single();
-  const current = data?.share_count ?? 0;
-  await supabase
-    .from("topic")
-    .update({ share_count: current + 1 })
-    .eq("id", topicId);
-};
-
-export const likeApi = { getTopicLikeInfo, likeTopic, unlikeTopic, incrementShareCount };
+export const likeApi = { getTopicLikeInfo, toggleTopicLike, recordTopicShare };

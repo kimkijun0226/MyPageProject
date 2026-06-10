@@ -101,6 +101,11 @@ async function getTopicId(id: string | number): Promise<Topic | null> {
   return data ? normalizeTopic(data) : null;
 }
 
+/** 이력서 글 (고정 토픽 ID) */
+async function getResumeTopic(resumeTopicId: number): Promise<Topic | null> {
+  return getTopicId(resumeTopicId);
+}
+
 async function uploadThumbnail(file: File): Promise<string> {
   const ext = file.name.split(".").pop();
   const fileName = `${nanoid()}.${ext}`;
@@ -124,8 +129,8 @@ async function update(id: string | number, payload: TopicUpdatePayload): Promise
   return normalizeTopic(data);
 }
 
-async function incrementViewCount(id: string | number): Promise<void> {
-  await supabase.rpc("increment_view_count", { topic_id: id });
+async function incrementViewCount(id: string | number, visitorKey: string): Promise<void> {
+  await supabase.rpc("increment_view_count", { topic_id: id, visitor_key: visitorKey });
 }
 
 async function deleteTopic(id: number): Promise<void> {
@@ -133,7 +138,7 @@ async function deleteTopic(id: number): Promise<void> {
   if (error) throw error;
 }
 
-/** 제목 / 닉네임 / 이메일로 검색 (PUBLIC 발행 글만) */
+/** 제목 / 본문 / 작성자(닉네임·이메일)로 검색 (PUBLIC 발행 글만) */
 async function searchTopics(query: string, category?: string): Promise<Topic[]> {
   const { data: matchedUsers } = await supabase
     .from("user")
@@ -148,11 +153,11 @@ async function searchTopics(query: string, category?: string): Promise<Topic[]> 
     .eq("status", TOPIC_STATUS.PUBLISH)
     .order("created_at", { ascending: false });
 
+  const orParts = [`title.ilike.%${query}%`, `content.ilike.%${query}%`];
   if (authorIds.length > 0) {
-    q = q.or(`title.ilike.%${query}%,author.in.(${authorIds.join(",")})`);
-  } else {
-    q = q.ilike("title", `%${query}%`);
+    orParts.push(`author.in.(${authorIds.join(",")})`);
   }
+  q = q.or(orParts.join(","));
 
   if (category && category.trim() !== "") {
     q = q.eq("category", category);
@@ -169,6 +174,7 @@ export const topicApi = {
   getCommunityTopics,
   getDraftTopics,
   getTopicId,
+  getResumeTopic,
   uploadThumbnail,
   create,
   update,

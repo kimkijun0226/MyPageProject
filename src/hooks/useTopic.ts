@@ -29,7 +29,7 @@ export function useCommunityTopics(category?: string) {
   });
 }
 
-/** 제목 / 닉네임 / 이메일 검색 */
+/** 제목 / 본문 / 작성자 검색 */
 export function useSearchTopics(query: string, category?: string) {
   return useQuery({
     queryKey: topicKeys.searchList(query, category ?? "").queryKey,

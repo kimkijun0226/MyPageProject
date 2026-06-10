@@ -46,11 +46,7 @@ export function AppCommentSection({ topicId, topicAuthorId, topicTitle }: AppCom
   const shareTopic = useShareTopic(topicId);
 
   const handleLike = () => {
-    if (!user) {
-      toast.error("로그인이 필요합니다.");
-      return;
-    }
-    toggleLike.mutate(likeInfo?.isLiked ?? false);
+    toggleLike.mutate();
   };
 
   const handleShare = () => {
