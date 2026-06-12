@@ -6,9 +6,10 @@ import {
   FileText,
   Heart,
   MessageCircle,
+  MessageSquare,
   UserPlus,
 } from "lucide-react";
-import { TbLayoutSidebarLeftCollapse } from "react-icons/tb";
+import { TbLayoutSidebarLeftCollapse, TbLayoutSidebarLeftExpand } from "react-icons/tb";
 import { CLASS_CATEGORY, DEFAULT_CATEGORY, getCategoryAddLabel } from "@/constants/category.constant";
 import { cn } from "@/lib/utils";
 import {
@@ -19,7 +20,7 @@ import {
   useSidebarStore,
   type SidebarNavTab,
 } from "@/stores";
-import { useCategoryUnreadCounts, useDmUnreadCount, useNotification, useUser } from "@/hooks";
+import { useCategoryUnreadCounts, useDmRooms, useDmUnreadCount, useNotification, useUser } from "@/hooks";
 import { IconTooltip } from "./IconTooltip";
 import { SidebarDmPanel } from "./SidebarDmPanel";
 import { SidebarSearchBar } from "./SidebarSearchBar";
@@ -338,10 +339,16 @@ function AppSidebar() {
   const { user } = useAuthStore();
   const { userInfo } = useUser();
   const { data: dmUnreadCount = 0 } = useDmUnreadCount();
+  const { data: dmRooms = [] } = useDmRooms();
+  const activeDmRoomId = searchParams.get("room");
+  const isNewDmChat = searchParams.get("new") === "1";
+  const activeDmRoom = activeDmRoomId ? dmRooms.find((r) => r.id === activeDmRoomId) : undefined;
+  const chatPartner = activeDmRoom?.other_user;
   const { counts: categoryUnreadCounts, total: categoryUnreadTotal } = useCategoryUnreadCounts();
   const { collapsed, mobileOpen, navTab, toggleCollapsed, setMobileOpen, setNavTab } = useSidebarStore();
   const { searchQuery, setSearchQuery } = useSearchStore();
-  const isExpanded = !collapsed || mobileOpen;
+  const showFullSidebar = !collapsed || mobileOpen;
+  const showIconRail = collapsed && !mobileOpen;
 
   const makeSearch = (category: string) => {
     const params = new URLSearchParams();
@@ -375,16 +382,78 @@ function AppSidebar() {
     setMobileOpen(false);
   };
 
+  const partnerAvatarIcon = chatPartner ? (
+    chatPartner.profile_image ? (
+      <img src={chatPartner.profile_image} alt="" className="h-8 w-8 rounded-full object-cover ring-1 ring-border/40" />
+    ) : (
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-[12px] font-medium text-muted-foreground">
+        {chatPartner.nickname?.charAt(0) ?? "?"}
+      </span>
+    )
+  ) : null;
+
+  const categoryNav = (
+    <div className={cn("flex flex-col gap-0.5", showFullSidebar ? "pb-2" : "px-1.5 py-2")}>
+      {CLASS_CATEGORY.map((menu) => (
+        <NavItem
+          key={menu.id}
+          icon={menu.icon}
+          label={menu.label}
+          to={`/${makeSearch(menu.category)}`}
+          active={isCategoryContext && currentCategory === menu.category}
+          collapsed={showIconRail}
+          badge={
+            showIconRail || (isCategoryContext && currentCategory === menu.category)
+              ? 0
+              : categoryUnreadCounts[menu.category] ?? 0
+          }
+        />
+      ))}
+    </div>
+  );
+
+  const collapsedDmNav = (
+    <div className="flex flex-col gap-0.5 px-1.5 py-2">
+      {chatPartner && activeDmRoomId ? (
+        <NavItem
+          icon={partnerAvatarIcon}
+          label={chatPartner.nickname ?? "DM"}
+          to={`/dm?room=${activeDmRoomId}`}
+          active={!isNewDmChat}
+          collapsed
+          badge={activeDmRoom?.unread_count}
+        />
+      ) : (
+        <NavItem
+          icon={<MessageSquare className="h-[17px] w-[17px]" />}
+          label="DM"
+          to="/dm"
+          active={isOnDm && !isNewDmChat && !activeDmRoomId}
+          collapsed
+          badge={dmUnreadCount}
+        />
+      )}
+      <NavItem
+        icon={<UserPlus className="h-[17px] w-[17px]" />}
+        label="새 대화"
+        to="/dm?new=1"
+        active={isNewDmChat}
+        collapsed
+      />
+    </div>
+  );
+
+  const iconRailNav = isOnDm && user?.id ? collapsedDmNav : categoryNav;
+
   return (
     <aside
       className={cn(
-        "flex h-dvh shrink-0 flex-col border-border/60 bg-muted/20 transition-[width] duration-200 ease-out",
-        isExpanded ? "overflow-visible" : "overflow-hidden",
-        isExpanded ? "w-64 border-r" : "w-0 border-r-0",
-        collapsed && mobileOpen && "z-40",
+        "flex h-dvh shrink-0 flex-col border-border/60 bg-background transition-[width] duration-200 ease-out",
+        showFullSidebar && "w-64 overflow-visible border-r",
+        showIconRail && "w-0 overflow-hidden border-r-0 lg:w-[52px] lg:overflow-visible lg:border-r",
       )}
     >
-        {isExpanded ? (
+        {showFullSidebar ? (
           <>
             {/* 헤더 */}
             <div className="flex h-14 shrink-0 items-center justify-between px-4">
@@ -399,26 +468,14 @@ function AppSidebar() {
                 )}
               </button>
               <div className="flex items-center">
-                {!collapsed && (
-                  <button
-                    type="button"
-                    className="hidden h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground lg:inline-flex"
-                    onClick={handleCollapse}
-                    aria-label="사이드바 접기"
-                  >
-                    <TbLayoutSidebarLeftCollapse className="h-4 w-4" />
-                  </button>
-                )}
-                {mobileOpen && (
-                  <button
-                    type="button"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
-                    onClick={() => setMobileOpen(false)}
-                    aria-label="메뉴 닫기"
-                  >
-                    <TbLayoutSidebarLeftCollapse className="h-4 w-4" />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+                  onClick={mobileOpen ? () => setMobileOpen(false) : handleCollapse}
+                  aria-label={mobileOpen ? "메뉴 닫기" : "사이드바 접기"}
+                >
+                  <TbLayoutSidebarLeftCollapse className="h-4 w-4" />
+                </button>
               </div>
             </div>
 
@@ -445,25 +502,7 @@ function AppSidebar() {
                       onClear={() => setSearchQuery("")}
                     />
                   </div>
-                  <div className="min-h-0 flex-1 overflow-y-auto">
-                    <div className="flex flex-col gap-0.5 pb-2">
-                      {CLASS_CATEGORY.map((menu) => (
-                        <NavItem
-                          key={menu.id}
-                          icon={menu.icon}
-                          label={menu.label}
-                          to={`/${makeSearch(menu.category)}`}
-                          active={isCategoryContext && currentCategory === menu.category}
-                          collapsed={false}
-                          badge={
-                            isCategoryContext && currentCategory === menu.category
-                              ? 0
-                              : categoryUnreadCounts[menu.category] ?? 0
-                          }
-                        />
-                      ))}
-                    </div>
-                  </div>
+                  <div className="min-h-0 flex-1 overflow-y-auto">{categoryNav}</div>
                 </>
               )}
 
@@ -504,6 +543,55 @@ function AppSidebar() {
               )}
             </div>
           </>
+        ) : null}
+
+        {showIconRail ? (
+          <div className="hidden min-h-0 flex-1 flex-col lg:flex">
+            <div className="flex h-14 shrink-0 items-center justify-center">
+              <IconTooltip label="사이드바 펼치기" side="right">
+                <button
+                  type="button"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+                  onClick={toggleCollapsed}
+                  aria-label="사이드바 펼치기"
+                >
+                  <TbLayoutSidebarLeftExpand className="h-4 w-4" />
+                </button>
+              </IconTooltip>
+            </div>
+
+            <nav className="min-h-0 flex-1 overflow-y-auto">{iconRailNav}</nav>
+
+            <div className="shrink-0 p-2">
+              {user?.id ? (
+                <div className="flex flex-col items-center gap-1">
+                  <IconTooltip label="프로필" side="right">
+                    <button
+                      type="button"
+                      onClick={() => navigate("/profile")}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+                    >
+                      {userInfo?.profile_image ? (
+                        <img src={userInfo.profile_image} alt="profile" className="h-7 w-7 rounded-full object-cover" />
+                      ) : (
+                        <CircleUser className="h-[18px] w-[18px]" />
+                      )}
+                    </button>
+                  </IconTooltip>
+                  <SidebarNotifications collapsed />
+                </div>
+              ) : (
+                <IconTooltip label="로그인" side="right">
+                  <NavLink
+                    to="/sign-in"
+                    className="mx-auto flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    <CircleUser className="h-[18px] w-[18px]" />
+                  </NavLink>
+                </IconTooltip>
+              )}
+            </div>
+          </div>
         ) : null}
     </aside>
   );

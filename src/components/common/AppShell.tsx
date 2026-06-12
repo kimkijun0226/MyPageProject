@@ -19,10 +19,10 @@ function AppShell() {
 
       <div className="flex h-dvh min-h-0 min-w-0 flex-1 flex-col overflow-hidden transition-[width] duration-200 ease-out">
         {collapsed && !mobileOpen && (
-          <div className="sticky top-0 z-30 flex shrink-0 items-center border-b border-border/50 bg-background/80 px-3 py-2.5 backdrop-blur-md">
+          <header className="flex h-12 shrink-0 items-center border-b border-border bg-background px-3 lg:hidden">
             <button
               type="button"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card/40 text-foreground transition hover:bg-foreground/6"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-muted text-foreground transition hover:bg-muted/80"
               onClick={() => setMobileOpen(true)}
               aria-label="메뉴 열기"
             >
@@ -34,10 +34,10 @@ function AppShell() {
                 <span className="ml-1.5 font-normal text-muted-foreground">({createCategoryLabel})</span>
               )}
             </span>
-          </div>
+          </header>
         )}
 
-        <main className="relative flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
+        <main className="relative flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto">
           <Outlet />
         </main>
       </div>
