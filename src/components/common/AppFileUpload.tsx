@@ -54,7 +54,7 @@ export function AppFileUpload({ file, setFile, fill, variant = "default", requir
                 {required && (
                   <Asterisk className="absolute -left-3 -top-2 h-3 w-3 text-[#F96859]" />
                 )}
-                썸네일 추가하기
+                썸네일 추가하기 (JPG, PNG, GIF…)
               </span>
             </span>
           </button>

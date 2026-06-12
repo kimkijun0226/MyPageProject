@@ -1,13 +1,12 @@
 import { useCreateBlockNote } from "@blocknote/react";
-// Or, you can use ariakit, shadcn, etc.
 import { BlockNoteView } from "@blocknote/mantine";
 import { ko } from "@blocknote/core/locales";
-// Default styles for the mantine editor
 import "@blocknote/mantine/style.css";
-// Include the included Inter font
 import "@blocknote/core/fonts/inter.css";
 import type { Block } from "@blocknote/core";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
+import { toast } from "sonner";
+import { topicApi } from "@/api";
 import { useTheme } from "@/components/theme-context";
 import { cn } from "@/lib/utils";
 
@@ -25,28 +24,42 @@ export function AppEditor({ content, setContent, readonly, className }: AppEdito
     theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)
       ? "dark"
       : "light";
-  // Create a new editor instance
-  const editor = useCreateBlockNote({
-    dictionary: {
-      ...locale,
-      placeholders: {
-        ...locale.placeholders,
-        emptyDocument: "텍스트를 입력하거나 '/'를 눌러 명령어를 실행하세요.",
+
+  const uploadFile = useCallback(async (file: File) => {
+    try {
+      return await topicApi.uploadContentImage(file);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "이미지 업로드에 실패했습니다.";
+      toast.error(message);
+      throw error;
+    }
+  }, []);
+
+  const editor = useCreateBlockNote(
+    {
+      dictionary: {
+        ...locale,
+        placeholders: {
+          ...locale.placeholders,
+          emptyDocument: "텍스트를 입력하거나 '/'를 눌러 명령어를 실행하세요.",
+        },
       },
+      uploadFile: readonly ? undefined : uploadFile,
     },
-  });
+    [readonly, uploadFile],
+  );
 
   useEffect(() => {
     if (content && content.length > 0) {
       const current = JSON.stringify(editor.document);
       const next = JSON.stringify(content);
 
-      // 두 개의 배열이 다르면 업데이트
       if (current !== next) {
         editor.replaceBlocks(editor.document, content);
       }
     }
   }, [content, editor]);
+
   return (
     <div
       className={cn(

@@ -4,6 +4,15 @@ import { TOPIC_STATUS, type Topic, type TOPIC_VISIBILITY } from "@/types";
 
 const FILES_BUCKET = "files";
 const TOPICS_PATH_PREFIX = "topics";
+const TOPIC_CONTENT_PATH_PREFIX = `${TOPICS_PATH_PREFIX}/content`;
+
+const ALLOWED_TOPIC_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/svg+xml",
+]);
 
 export type TopicCreatePayload = {
   author: string;
@@ -106,15 +115,34 @@ async function getResumeTopic(resumeTopicId: number): Promise<Topic | null> {
   return getTopicId(resumeTopicId);
 }
 
-async function uploadThumbnail(file: File): Promise<string> {
-  const ext = file.name.split(".").pop();
+function assertTopicImageFile(file: File) {
+  if (!ALLOWED_TOPIC_IMAGE_TYPES.has(file.type)) {
+    throw new Error("JPG, PNG, GIF, WebP, SVG 이미지만 업로드할 수 있습니다.");
+  }
+}
+
+async function uploadTopicFile(file: File, folder: string): Promise<string> {
+  assertTopicImageFile(file);
+  const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
   const fileName = `${nanoid()}.${ext}`;
-  const filePath = `${TOPICS_PATH_PREFIX}/${fileName}`;
-  const { error } = await supabase.storage.from(FILES_BUCKET).upload(filePath, file);
+  const filePath = `${folder}/${fileName}`;
+  const { error } = await supabase.storage.from(FILES_BUCKET).upload(filePath, file, {
+    contentType: file.type,
+    upsert: false,
+  });
   if (error) throw error;
   const { data } = supabase.storage.from(FILES_BUCKET).getPublicUrl(filePath);
-  if (!data?.publicUrl) throw new Error("썸네일 URL 조회에 실패했습니다.");
+  if (!data?.publicUrl) throw new Error("이미지 URL 조회에 실패했습니다.");
   return data.publicUrl;
+}
+
+async function uploadThumbnail(file: File): Promise<string> {
+  return uploadTopicFile(file, TOPICS_PATH_PREFIX);
+}
+
+/** BlockNote 본문 이미지·GIF 업로드 */
+async function uploadContentImage(file: File): Promise<string> {
+  return uploadTopicFile(file, TOPIC_CONTENT_PATH_PREFIX);
 }
 
 async function create(payload: TopicCreatePayload): Promise<Topic> {
@@ -176,6 +204,7 @@ export const topicApi = {
   getTopicId,
   getResumeTopic,
   uploadThumbnail,
+  uploadContentImage,
   create,
   update,
   deleteTopic,
