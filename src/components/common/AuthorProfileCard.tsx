@@ -13,9 +13,11 @@ const LOGIN_REQUIRED_MESSAGE = "로그인시 이용가능한 서비스";
 type AuthorProfileCardProps = {
   authorInfo: UserInfo | null | undefined;
   variant?: "default" | "compact";
+  align?: "start" | "end";
+  className?: string;
 };
 
-function AuthorProfileCard({ authorInfo, variant = "default" }: AuthorProfileCardProps) {
+function AuthorProfileCard({ authorInfo, variant = "default", align = "start", className }: AuthorProfileCardProps) {
   const isCompact = variant === "compact";
   const [isImageError, setIsImageError] = useState(false);
   const hasProfileImage = !!authorInfo?.profile_image && !isImageError;
@@ -51,13 +53,20 @@ function AuthorProfileCard({ authorInfo, variant = "default" }: AuthorProfileCar
       className={cn(
         "border border-border/50 bg-background/75 backdrop-blur-md",
         isCompact ? "max-w-[220px] rounded-lg px-2.5 py-2 shadow-sm" : "rounded-xl bg-muted/15 px-4 py-4 sm:px-5",
+        className,
       )}
     >
       {!isCompact && (
         <p className="mb-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">작성자</p>
       )}
-      <div className={cn("flex items-center gap-2", !isCompact && "flex-col gap-4 sm:flex-row sm:items-center sm:justify-between")}>
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+      <div
+        className={cn(
+          "flex items-center gap-2",
+          align === "end" && "justify-end",
+          !isCompact && "flex-col gap-4 sm:flex-row sm:items-center sm:justify-between",
+        )}
+      >
+        <div className={cn("flex min-w-0 items-center gap-2", align === "start" && "flex-1")}>
           {hasProfileImage ? (
             <img
               src={authorInfo.profile_image ?? undefined}

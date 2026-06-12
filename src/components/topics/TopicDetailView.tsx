@@ -14,6 +14,7 @@ import {
 import { CLASS_CATEGORY, isResumeCategory, RESUME_TITLE } from "@/constants/category.constant";
 import { useUserInfo } from "@/hooks";
 import { isAdmin } from "@/lib/admin";
+import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores";
 import type { Topic } from "@/types";
 import dayjs from "dayjs";
@@ -51,34 +52,36 @@ export function TopicDetailView({
     return date.isSame(dayjs(), "day") ? date.fromNow() : date.format("YYYY. MM. DD");
   }
 
-  const actionButtons =
-    showActions && (onBack || canManage) ? (
-      <div className="absolute left-6 top-6 z-20 flex items-center gap-2">
+  const stickyHeader = (
+    <header className="sticky top-0 z-30 flex items-center justify-between gap-3 px-5 py-2.5 sm:px-8">
+      <div className="flex shrink-0 items-center gap-1">
         {onBack && (
           <Button
             variant="outline"
             size="icon"
-            className="border-border/60 bg-background/80 backdrop-blur-sm hover:bg-background"
+            className="h-9 w-9 border-border/60 bg-background/80 hover:bg-background"
             onClick={onBack}
+            aria-label="뒤로가기"
           >
-            <ArrowLeft />
+            <ArrowLeft className="h-4 w-4" />
           </Button>
         )}
-        {canManage && onEdit && (
+        {showActions && canManage && onEdit && (
           <Button
             variant="outline"
             size="icon"
-            className="border-border/60 bg-primary/15 text-primary backdrop-blur-sm hover:bg-primary/25"
+            className="h-9 w-9 border-border/60 bg-primary/15 text-primary hover:bg-primary/25"
             onClick={onEdit}
+            aria-label="수정"
           >
-            <Pencil />
+            <Pencil className="h-4 w-4" />
           </Button>
         )}
-        {canManage && onDelete && (
+        {showActions && canManage && onDelete && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" size="icon" className="!bg-red-800/50">
-                <Trash2 />
+              <Button variant="outline" size="icon" className="h-9 w-9 !bg-red-800/50" aria-label="삭제">
+                <Trash2 className="h-4 w-4" />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -98,18 +101,24 @@ export function TopicDetailView({
           </AlertDialog>
         )}
       </div>
-    ) : null;
+
+      <AuthorProfileCard
+        authorInfo={authorInfo}
+        variant="compact"
+        align="end"
+        className="ml-auto max-w-none shrink border-0 bg-transparent p-0 shadow-none backdrop-blur-none"
+      />
+    </header>
+  );
 
   return (
     <div className="relative w-full">
+      {stickyHeader}
+
       <div
         className="relative h-60 w-full shrink-0 bg-muted bg-cover bg-[50%_35%] md:h-100"
         style={{ backgroundImage: topic.thumbnail ? `url(${topic.thumbnail})` : undefined }}
       >
-        {actionButtons}
-        <div className="absolute right-4 top-4 z-20 sm:right-6 sm:top-6">
-          <AuthorProfileCard authorInfo={authorInfo} variant="compact" />
-        </div>
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background via-transparent to-transparent" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-l from-background via-transparent to-transparent" />
@@ -131,7 +140,12 @@ export function TopicDetailView({
       </section>
 
       <div className="mx-auto w-full max-w-[840px] px-4 pb-6 pt-10">
-        <div className="[&_.bn-container]:!h-auto [&_.bn-container]:!min-h-0 [&_.bn-editor]:!min-h-0 [&_.bn-container]:!border-0 [&_.bn-editor]:!bg-transparent">
+        <div
+          className={cn(
+            "[&_.bn-container]:!h-auto [&_.bn-container]:!min-h-0 [&_.bn-editor]:!min-h-0 [&_.bn-container]:!border-0 [&_.bn-editor]:!bg-transparent",
+            hideCategoryLabel && "resume-content",
+          )}
+        >
           {topic.content && <AppEditor content={JSON.parse(topic.content)} readonly />}
         </div>
 
