@@ -19,6 +19,10 @@ export function isResumeCategory(category: string) {
   return category === "resume";
 }
 
+export function isPortfolioCategory(category: string) {
+  return category === "portfolio";
+}
+
 export const CLASS_CATEGORY = [
   { id: 1, label: "이력서", category: "resume", icon: <IdCard /> },
   { id: 2, label: "프로젝트", category: "portfolio", icon: <BriefcaseBusiness /> },

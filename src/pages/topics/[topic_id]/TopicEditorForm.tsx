@@ -3,10 +3,16 @@ import { Button } from "@/components/ui";
 import {
   DEFAULT_CATEGORY,
   getCategoryAddLabel,
+  isPortfolioCategory,
   isResumeCategory,
   RESUME_TITLE,
 } from "@/constants/category.constant";
 import { useImageUpload, useTopic } from "@/hooks";
+import {
+  arePortfolioLinksValid,
+  createPortfolioBodyTemplate,
+  isPortfolioContentEmpty,
+} from "@/lib/portfolioTopicContent";
 import { cn } from "@/lib/utils";
 import { useSidebarStore } from "@/stores";
 import { TOPIC_STATUS, type TOPIC_VISIBILITY, type Topic } from "@/types";
@@ -40,10 +46,20 @@ export function TopicEditorForm({
   const { upload } = useImageUpload();
   const isUpdateMode = mode === "update";
 
-  const [title, setTitle] = useState(topic?.title ?? "");
-  const [content, setContent] = useState<Block[]>(topic?.content ? JSON.parse(topic.content) : []);
   const category = topic?.category ?? DEFAULT_CATEGORY;
   const isResume = isResumeCategory(category);
+  const isPortfolio = isPortfolioCategory(category);
+
+  const initialContent = (() => {
+    if (topic?.content && !isPortfolioContentEmpty(topic.content)) {
+      return JSON.parse(topic.content) as Block[];
+    }
+    if (isPortfolio) return createPortfolioBodyTemplate();
+    return [];
+  })();
+
+  const [title, setTitle] = useState(topic?.title ?? "");
+  const [content, setContent] = useState<Block[]>(initialContent);
   const resolvedTitle = isResume ? RESUME_TITLE : title;
   const [thumbnail, setThumbnail] = useState<File | string | null>(topic?.thumbnail ?? null);
   const [visibility, setVisibility] = useState<TOPIC_VISIBILITY>(
@@ -87,6 +103,13 @@ export function TopicEditorForm({
   const handlePublish = async () => {
     if (!resolvedTitle || !content.length || !thumbnail) {
       toast.warning(isResume ? "본문, 썸네일은 필수입니다." : "제목, 본문, 썸네일은 필수입니다.");
+      return;
+    }
+
+    if (isPortfolio && !arePortfolioLinksValid(content)) {
+      toast.warning(
+        "소제목·설명·Link·GitHub 안내 문구를 본인 내용으로 바꾼 뒤 발행해 주세요.",
+      );
       return;
     }
 

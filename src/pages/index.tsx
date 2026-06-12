@@ -13,9 +13,11 @@ import {
   CLASS_CATEGORY,
   DEFAULT_CATEGORY,
   getCategoryAddLabel,
+  isPortfolioCategory,
   isResumeCategory,
   RESUME_TOPIC_ID,
 } from "@/constants/category.constant";
+import { createPortfolioBodyTemplate } from "@/lib/portfolioTopicContent";
 import { isAdmin } from "@/lib/admin";
 import { cn } from "@/lib/utils";
 import { ResumeCategoryPage } from "./ResumeCategoryPage";
@@ -97,12 +99,17 @@ function App() {
     }
 
     try {
+      const nextCategory = category || DEFAULT_CATEGORY;
+      const initialContent = isPortfolioCategory(nextCategory)
+        ? JSON.stringify(createPortfolioBodyTemplate())
+        : null;
+
       const created = await createTopic.mutateAsync({
         author: user.id,
         status: null,
         title: null,
-        content: null,
-        category: category || DEFAULT_CATEGORY,
+        content: initialContent,
+        category: nextCategory,
         thumbnail: null,
         visibility: "PRIVATE",
       });
