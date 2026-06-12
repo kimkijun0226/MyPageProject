@@ -13,6 +13,7 @@ import {
   CLASS_CATEGORY,
   DEFAULT_CATEGORY,
   getCategoryAddLabel,
+  isResumeCategory,
   RESUME_TOPIC_ID,
 } from "@/constants/category.constant";
 import { isAdmin } from "@/lib/admin";
@@ -26,7 +27,8 @@ function App() {
   const setBrowseCategory = useBrowseCategoryStore((s) => s.setCategory);
 
   useEffect(() => {
-    if (!searchParams.get("category")) {
+    const current = searchParams.get("category");
+    if (!current || current === "home") {
       setSearchParams({ category: DEFAULT_CATEGORY }, { replace: true });
     }
   }, [searchParams, setSearchParams]);
@@ -154,7 +156,7 @@ function App() {
     return next?.label ?? null;
   }, [activeSectionId, category, sectionCategories]);
 
-  if (!isSearchMode && category === DEFAULT_CATEGORY) {
+  if (!isSearchMode && isResumeCategory(category)) {
     return (
       <main className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
         <section className="flex min-h-0 flex-1 flex-col overflow-y-auto">
@@ -298,7 +300,7 @@ function App() {
         </div>
       </section>
 
-      {isAuthed && isAdmin(user) ? (
+      {isAuthed && isAdmin(user) && !isResumeCategory(category) ? (
         <div className="z-20 flex shrink-0 justify-center px-3 py-4 sm:px-4 sm:py-5">
           <div className="flex items-center gap-2 rounded-full border border-violet-200/60 bg-white/65 p-1.5 shadow-2xl shadow-black/10 ring-1 ring-violet-300/15 backdrop-blur-xl dark:border-sky-500/15 dark:bg-slate-950/40 dark:ring-sky-500/10">
             <Button
