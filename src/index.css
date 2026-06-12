@@ -152,6 +152,52 @@
   background-color: transparent !important;
 }
 
+/* 이력서(resume) 본문 가독성 */
+.resume-content .bn-block-outer {
+  margin-bottom: 0.35rem;
+}
+
+.resume-content [data-content-type="heading"][data-level="2"] {
+  margin-top: 2.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.resume-content [data-content-type="heading"][data-level="3"] {
+  margin-top: 1.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 650;
+}
+
+.resume-content [data-content-type="heading"][data-level="4"] {
+  margin-top: 1.25rem;
+  margin-bottom: 0.35rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: oklch(0.55 0.02 280);
+}
+
+.dark .resume-content [data-content-type="heading"][data-level="4"] {
+  color: oklch(0.78 0.03 280);
+}
+
+.resume-content [data-content-type="divider"] {
+  margin: 1.25rem 0;
+  opacity: 0.45;
+}
+
+.resume-content [data-content-type="bulletListItem"],
+.resume-content [data-content-type="numberedListItem"] {
+  line-height: 1.7;
+}
+
+.resume-content [data-content-type="paragraph"] {
+  line-height: 1.75;
+}
+
 /* BlockNote 라이트 모드 텍스트 색상 강제 적용 */
 :root:not(.dark) .bn-editor,
 :root:not(.dark) .bn-block-content,
