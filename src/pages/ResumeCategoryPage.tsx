@@ -1,4 +1,3 @@
-import { SiteWelcomeModal } from "@/components/common/SiteWelcomeModal";
 import { TopicDetailView } from "@/components/topics/TopicDetailView";
 import { topicApi } from "@/api";
 import { RESUME_TOPIC_ID } from "@/constants/category.constant";
@@ -48,7 +47,6 @@ export function ResumeCategoryPage() {
 
   return (
     <div className="w-full">
-      <SiteWelcomeModal />
       <TopicDetailView
         topic={resumeTopic}
         hideCategoryLabel
