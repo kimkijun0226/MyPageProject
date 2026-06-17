@@ -1,14 +1,25 @@
+import { BlockNoteSchema, createCodeBlockSpec, type Block } from "@blocknote/core";
+import { codeBlockOptions } from "@blocknote/code-block";
 import { useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import { ko } from "@blocknote/core/locales";
 import "@blocknote/mantine/style.css";
 import "@blocknote/core/fonts/inter.css";
-import type { Block } from "@blocknote/core";
+
 import { useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { topicApi } from "@/api";
 import { useTheme } from "@/components/theme-context";
 import { cn } from "@/lib/utils";
+
+const blockNoteSchema = BlockNoteSchema.create().extend({
+  blockSpecs: {
+    codeBlock: createCodeBlockSpec({
+      ...codeBlockOptions,
+      defaultLanguage: "typescript",
+    }),
+  },
+});
 
 interface AppEditorProps {
   content?: Block[];
@@ -37,6 +48,7 @@ export function AppEditor({ content, setContent, readonly, className }: AppEdito
 
   const editor = useCreateBlockNote(
     {
+      schema: blockNoteSchema,
       dictionary: {
         ...locale,
         placeholders: {

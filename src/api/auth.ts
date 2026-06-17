@@ -107,12 +107,17 @@ async function checkEmailDuplicate(email: string): Promise<boolean> {
   return data !== null;
 }
 
+function getAuthRedirectUrl() {
+  const base = (import.meta.env.VITE_APP_URL || window.location.origin).replace(/\/$/, "");
+  return `${base}/auth/callback`;
+}
+
 async function signInWithGoogle(): Promise<void> {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
       queryParams: { access_type: "offline", prompt: "consent" },
-      redirectTo: `${import.meta.env.VITE_APP_URL}/auth/callback`,
+      redirectTo: getAuthRedirectUrl(),
     },
   });
   if (error) throw error;
