@@ -148,8 +148,21 @@
   }
 }
 
-.bn-editor {
+.bn-container .bn-editor {
   background-color: transparent !important;
+}
+
+/* BlockNote 기본 라이트 변수가 앱 다크 모드와 충돌하지 않도록 보정 */
+.dark .bn-container,
+.dark .bn-container[data-color-scheme="light"] {
+  --bn-colors-editor-text: oklch(0.985 0 0);
+  --bn-colors-editor-background: transparent;
+}
+
+.dark .bn-container .bn-editor,
+.dark .bn-container .bn-block-content,
+.dark .bn-container .bn-inline-content {
+  color: var(--bn-colors-editor-text) !important;
 }
 
 /* 이력서(resume) 본문 가독성 */
@@ -198,14 +211,6 @@
   line-height: 1.75;
 }
 
-/* BlockNote 라이트 모드 텍스트 색상 강제 적용 */
-:root:not(.dark) .bn-editor,
-:root:not(.dark) .bn-block-content,
-:root:not(.dark) .bn-inline-content {
-  --bn-colors-editor-text: oklch(0.145 0 0) !important;
-  color: oklch(0.145 0 0) !important;
-}
-
 @keyframes scrollWheel {
   0% {
     transform: translateY(0);
@@ -222,14 +227,6 @@
     transform: translateY(0);
     opacity: 0.15;
   }
-}
-
-/* BlockNote 다크 모드 텍스트 색상 강제 적용 */
-.dark .bn-editor,
-.dark .bn-block-content,
-.dark .bn-inline-content {
-  --bn-colors-editor-text: oklch(0.985 0 0) !important;
-  color: oklch(0.985 0 0) !important;
 }
 
 @layer base {

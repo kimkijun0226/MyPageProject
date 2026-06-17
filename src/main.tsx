@@ -16,7 +16,6 @@ import { TopicDetail } from "./pages/topics/[topic_id]/detail.tsx";
 import DmPage from "./pages/dm/index.tsx";
 import ProfilePage from "./pages/profile/index.tsx";
 import { queryClient } from "./lib/queryClient";
-import "@mantine/core/styles.css";
 import "./index.css";
 import { Toaster } from "./components/ui";
 
