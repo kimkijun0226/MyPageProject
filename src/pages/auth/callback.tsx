@@ -28,51 +28,41 @@ export default function AuthCallback() {
       });
     };
 
-    const run = async () => {
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get("code");
-
-      if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
-        if (error) {
-          toast.error(error.message);
-          navigate("/sign-in");
-          return;
-        }
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) {
+        listener.subscription.unsubscribe();
         finish();
-        return;
       }
+    });
 
-      const { data, error } = await supabase.auth.getSession();
+    // detectSessionInUrl이 URL의 code를 자동 교환함 — exchangeCodeForSession 중복 호출 금지
+    void supabase.auth.getSession().then(({ data, error }) => {
       if (error) {
+        listener.subscription.unsubscribe();
         toast.error(error.message);
         navigate("/sign-in");
         return;
       }
       if (data.session) {
+        listener.subscription.unsubscribe();
         finish();
-        return;
       }
+    });
 
-      const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-        if (event === "SIGNED_IN" && session) {
-          listener.subscription.unsubscribe();
-          finish();
+    const timeout = window.setTimeout(() => {
+      listener.subscription.unsubscribe();
+      void supabase.auth.getSession().then(({ data }) => {
+        if (!data.session) {
+          toast.error("로그인 세션을 찾지 못했습니다.");
+          navigate("/sign-in");
         }
       });
+    }, 5000);
 
-      window.setTimeout(() => {
-        listener.subscription.unsubscribe();
-        supabase.auth.getSession().then(({ data: retry }) => {
-          if (!retry.session) {
-            toast.error("로그인 세션을 찾지 못했습니다.");
-            navigate("/sign-in");
-          }
-        });
-      }, 4000);
+    return () => {
+      window.clearTimeout(timeout);
+      listener.subscription.unsubscribe();
     };
-
-    void run();
   }, [navigate, supabaseGetSession]);
 
   return (

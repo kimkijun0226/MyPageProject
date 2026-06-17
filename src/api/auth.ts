@@ -108,7 +108,8 @@ async function checkEmailDuplicate(email: string): Promise<boolean> {
 }
 
 function getAuthRedirectUrl() {
-  const base = (import.meta.env.VITE_APP_URL || window.location.origin).replace(/\/$/, "");
+  // PKCE verifier는 현재 origin의 localStorage에 저장되므로 redirect도 같은 origin이어야 함
+  const base = window.location.origin.replace(/\/$/, "");
   return `${base}/auth/callback`;
 }
 
