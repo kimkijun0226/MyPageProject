@@ -47,7 +47,7 @@ function headingBlock(text: string): Block {
 }
 
 function dividerBlock(): Block {
-  return { id: nanoid(), type: "divider", props: {}, children: [] } as Block;
+  return ({ id: nanoid(), type: "divider", props: {}, children: [] } as unknown) as Block;
 }
 
 function emptyParagraphBlock(): Block {
